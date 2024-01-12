@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
         // cmd_Vy_lpf = LPF(cmd_Vy, pre_cmd_Vy_lpf, 2*PI*1, dt);
         // pre_cmd_Vx_lpf = cmd_Vx_lpf; pre_cmd_Vy_lpf = cmd_Vy_lpf;
         cmd_yaw = cmdJoy[2];
-        
+
         trajOut = trajGeneration(t, walkEnable, cmd_Vx, cmd_Vy, dt);
         Xcom = trajOut(0), Ycom = trajOut(3);
         dXcom = trajOut(1), dYcom = trajOut(4);
