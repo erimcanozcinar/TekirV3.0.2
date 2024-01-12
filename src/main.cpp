@@ -1,0 +1,313 @@
+#include "main.hpp"
+#include "trajectory.cpp"
+
+int main(int argc, char** argv) {
+    /* Riasim */
+    auto binaryPath = raisim::Path::setFromArgv(argv[0]);
+    raisim::World::setActivationKey(binaryPath.getDirectory() + "\\activation.raisim");
+    raisim::World world;
+    // timeBeginPeriod(1); // for sleep_for function. windows default clock speed is 1/64 second. This sets it to 1ms.
+
+    world.setTimeStep(0.001);
+    world.setMaterialPairProp("steel", "steel", 0.95, 0.95, 0.001, 0.95, 0.001);
+    world.setMaterialPairProp("steel", "rubber", 0.95, 0.15, 0.001, 0.95, 0.001);
+    auto ground = world.addGround(0, "steel");
+    // ground->setAppearance("hidden");
+
+    auto quadruped = world.addArticulatedSystem("/home/erim/RaiSim_Simulations/TekirV3/rsc/urdf/tekir3mesh_new.urdf");
+    // auto quadruped = world.addArticulatedSystem("/home/erim/raisim_ws/rsc/Tekir/urdf/tekir3.urdf");
+    quadruped->getCollisionBody("Foot_lf/0").setMaterial("rubber");
+    quadruped->getCollisionBody("Foot_rf/0").setMaterial("rubber");
+    quadruped->getCollisionBody("Foot_lb/0").setMaterial("rubber");
+    quadruped->getCollisionBody("Foot_rb/0").setMaterial("rubber");
+
+    quadruped->setGeneralizedCoordinate(initialConditions);
+
+    /* Create Log file */
+    FILE* fp0;
+    fp0 = fopen("/home/erim/RaiSim_Simulations/TekirV3.0.1/Log/dataLog.txt", "w");
+
+    /* Allegro */
+    al_init();
+    al_install_joystick();
+    ALLEGRO_EVENT_QUEUE *event_queue = al_create_event_queue();
+    al_register_event_source(event_queue, al_get_joystick_event_source());
+    ALLEGRO_JOYSTICK *joystick = al_get_joystick(0);
+    if (!joystick) {
+            al_show_native_message_box(NULL, NULL, NULL, "Failed to open gamepad!", NULL, ALLEGRO_MESSAGEBOX_ERROR);
+            return -1;
+    }
+    std::cout << "Gamepad routines enabled." << std::endl;
+    ALLEGRO_EVENT event;
+
+    /* Init Eigen variables */
+    prevgenVelocity.setZero();
+    dQ_LF.setZero(); dQ_RF.setZero(); dQ_LB.setZero(); dQ_RB.setZero();
+    Fcon_LF.setZero(); Fcon_RF.setZero(); Fcon_LB.setZero(); Fcon_RB.setZero();
+
+    prev_Pbase.setZero();
+
+    accBody.setZero(); velBody.setZero();
+    jPositions.setZero(); jVelocities.setZero(); jAccelerations.setZero(); jffTorques.setZero();
+
+    // Kp << 700, 200, 200;
+    // Kd << 70, 20, 20;
+    Kp << 120, 40, 40;
+    Kd << 12, 4, 4;
+
+    trajOut.setZero();
+
+    Tau_LF.setZero(); Tau_RF.setZero(); Tau_LB.setZero(); Tau_RB.setZero();
+    
+    prevdQcm.setZero(); prevQcm.setZero(); prevQcm_filtered.setZero();
+
+    camPos.setZero(); camRot.setZero();
+
+    /* Initialize Rotbot */
+    Pf_LF << Pfx_f, Pfy + LatOut, Pfz;
+    Pf_RF << Pfx_f, -Pfy - LatOut, Pfz;
+    Pf_LB << -Pfx_b, Pfy + LatOut, Pfz;
+    Pf_RB << -Pfx_b, -Pfy - LatOut, Pfz;
+    Pcom << ComX, ComY, ComZ;
+    torsoRot << ComRoll, ComPitch, ComYaw;
+    Q_LF = fullBodyIKan(Pf_LF, Pcom, torsoRot, 1);
+    Q_RF = fullBodyIKan(Pf_RF, Pcom, torsoRot, 2);
+    Q_LB = fullBodyIKan(Pf_LB, Pcom, torsoRot, 3);
+    Q_RB = fullBodyIKan(Pf_RB, Pcom, torsoRot, 4);
+    initialConditions << ComX, ComY, ComZ, quat_w, quat_x, quat_y, quat_z, Q_LF(0), Q_LF(1), Q_LF(2), Q_RF(0), Q_RF(1), Q_RF(2), Q_LB(0), Q_LB(1), Q_LB(2), Q_RB(0), Q_RB(1), Q_RB(2);
+    quadruped->setGeneralizedCoordinate(initialConditions);
+
+
+    /* Launch raisim server for visualization.Can be visualized on raisimUnity */
+    raisim::RaisimServer server(&world);
+    server.setMap("default");
+    server.launchServer();
+
+
+    while (!quit) {
+        RS_TIMED_LOOP(int(world.getTimeStep()*1e6));
+        t = world.getWorldTime();
+        dt = world.getTimeStep();
+
+        /* TRAJECTORY GENERATION WITH CONTROLLER */
+        dualShockController(event_queue, event, cmdJoy, walkEnable, quit);
+        cmd_Vx = cmdJoy[0]; cmd_Vy = cmdJoy[1];
+        // cmd_Vx_lpf = LPF(cmd_Vx, pre_cmd_Vx_lpf, 2*PI*1, dt);
+        // cmd_Vy_lpf = LPF(cmd_Vy, pre_cmd_Vy_lpf, 2*PI*1, dt);
+        // pre_cmd_Vx_lpf = cmd_Vx_lpf; pre_cmd_Vy_lpf = cmd_Vy_lpf;
+        cmd_yaw = cmdJoy[2];
+        
+        trajOut = trajGeneration(t, walkEnable, cmd_Vx, cmd_Vy, dt);
+        Xcom = trajOut(0), Ycom = trajOut(3);
+        dXcom = trajOut(1), dYcom = trajOut(4);
+        ddXcom = trajOut(2), ddYcom = trajOut(5);
+        Zcom = trajOut(6);
+        Px_Rfoot = trajOut(7); Py_Rfoot = trajOut(9); Pz_Rfoot = trajOut(11);
+        Px_Lfoot = trajOut(8); Py_Lfoot = trajOut(10); Pz_Lfoot = trajOut(12);
+        
+        /* CONTACT DEFINITION START */
+        for (auto& contact : quadruped->getContacts()) // LF:3, RF:2, LB:1, RB:0
+        {
+            if (contact.skip()) continue;
+            if (quadruped->getBodyIdx("shank_lf") == contact.getlocalBodyIndex())
+            {
+                Fcon_LF = -contact.getContactFrame().e().transpose() * contact.getImpulse().e() / dt;
+                Pcon_LF = contact.getPosition().e().transpose();
+            }
+            else if (quadruped->getBodyIdx("shank_rf") == contact.getlocalBodyIndex())
+            {
+                Fcon_RF = -contact.getContactFrame().e().transpose() * contact.getImpulse().e() / dt;
+                Pcon_RF = contact.getPosition().e().transpose();
+            }
+            else if (quadruped->getBodyIdx("shank_lb") == contact.getlocalBodyIndex())
+            {
+                Fcon_LB = -contact.getContactFrame().e().transpose() * contact.getImpulse().e() / dt;
+                Pcon_LB = contact.getPosition().e().transpose();
+            }
+            else if (quadruped->getBodyIdx("shank_rb") == contact.getlocalBodyIndex())
+            {
+                Fcon_RB = -contact.getContactFrame().e().transpose() * contact.getImpulse().e() / dt;
+                Pcon_RB = contact.getPosition().e().transpose();
+            }
+        }
+
+        /* READ ACTUAL DATA START */
+        genCoordinates = quadruped->getGeneralizedCoordinate().e();
+        genVelocity = quadruped->getGeneralizedVelocity().e();
+        for (int i = 0; i < 18; i++)
+        {
+            genAcceleration(i) = Numdiff(genVelocity(i), prevgenVelocity(i), dt);
+            prevgenVelocity(i) = genVelocity(i);
+        }
+
+        imuRot = quat2euler(genCoordinates(3), genCoordinates(4), genCoordinates(5), genCoordinates(6));
+        dimuRot << Numdiff(imuRot(0), prev_imuRot(0), dt), Numdiff(imuRot(1), prev_imuRot(1), dt), Numdiff(imuRot(2), prev_imuRot(2), dt);
+        prev_imuRot = imuRot;
+
+        q_LF << genCoordinates(7), genCoordinates(8), genCoordinates(9);
+        q_RF << genCoordinates(10), genCoordinates(11), genCoordinates(12);
+        q_LB << genCoordinates(13), genCoordinates(14), genCoordinates(15);
+        q_RB << genCoordinates(16), genCoordinates(17), genCoordinates(18);
+        dq_LF << genVelocity(6), genVelocity(7), genVelocity(8);
+        dq_RF << genVelocity(9), genVelocity(10), genVelocity(11);
+        dq_LB << genVelocity(12), genVelocity(13), genVelocity(14);
+        dq_RB << genVelocity(15), genVelocity(16), genVelocity(17);     
+        
+        /* ORIENTATION CONTROL */
+        // Zpitch_front = Kp_pitch*(0 - imuRot(1)) + Kd_pitch*(0 - dimuRot(1));
+        // Zpitch_back = -Kp_pitch*(0 - imuRot(1)) - Kd_pitch*(0 - dimuRot(1));
+        // Zroll_left = -Kp_roll*(0 - imuRot(0)) - Kd_roll*(0 - dimuRot(0));
+        // Zroll_right = Kp_roll * (0 - imuRot(0)) + Kd_roll * (0 - dimuRot(0));
+        // Zpitch_LF = Zpitch_front; Zpitch_RF = Zpitch_front; Zpitch_LB = Zpitch_back; Zpitch_RB = Zpitch_back;
+        // Zroll_LF = Zroll_left; Zroll_RF = Zroll_right; Zroll_LB = Zroll_left; Zroll_RB = Zroll_right;
+        // if (Pz_Lfoot > 0.0)
+        // {
+        //     Zroll_LF = 0.0; Zpitch_LF = 0.0;
+        //     Zroll_RB = 0.0; Zpitch_RB = 0.0;
+        // }
+        // if (Pz_Rfoot > 0.0)
+        // {
+        //     Zroll_RF = 0.0; Zpitch_RF = 0.0;
+        //     Zroll_LB = 0.0; Zpitch_LB = 0.0;
+        // }
+
+        /* CENTRODIAL MOMENTUM */
+        // if (t>5)
+        // {
+        //     Zfoot_offset = 0.1;
+        //     Fcoef = 0;
+        // }else{
+        //     Zfoot_offset = 0.0;
+        //     Fcoef = 1;
+        // }
+
+        // dQcm = centrodialMomentum(quadruped);
+        // for(int i = 0; i < 6; i++)
+        // {
+        //     Qcm(i) = numIntegral(dQcm(i), prevdQcm(i), prevQcm(i), dt);
+        //     Qcm_filtered(i) = HPF(Qcm(i), prevQcm(i), prevQcm_filtered(i), 2*PI*0.1, dt);
+        //     prevdQcm(i) = dQcm(i);
+        //     prevQcm(i) = Qcm(i);
+        //     prevQcm_filtered(i) = Qcm_filtered(i);
+        // }
+        // Qcm_RF << Qcm_filtered(0), Qcm_filtered(1), Qcm_filtered(2);
+        // Qcm_LB << Qcm_filtered(3), Qcm_filtered(4), Qcm_filtered(5);
+
+        /* DESIRED FOOT POSITION */
+        Pcom << Xcom, Ycom, Zcom;
+        Rcom << genCoordinates(0), genCoordinates(1), genCoordinates(2);
+        //torsoRot << -imuRot(0), -imuRot(1), -imuRot(2); // Torso Orientation
+        torsoRot << 0*PI/180, 0*PI/180, cmd_yaw; // Torso Orientation
+        Pf_LF << Px_Lfoot + Pfx_f, Py_Lfoot + Pfy + LatOut, Pfz + Pz_Lfoot;
+        Pf_RF << Px_Rfoot + Pfx_f, Py_Rfoot - Pfy - LatOut, Pfz + Pz_Rfoot;
+        Pf_LB << Px_Rfoot - Pfx_b, Py_Rfoot + Pfy + LatOut, Pfz + Pz_Rfoot;
+        Pf_RB << Px_Lfoot - Pfx_b, Py_Lfoot - Pfy - LatOut, Pfz + Pz_Lfoot;
+
+        /* ANALYTIC INVERSE KINEMATIC */
+        pre_dQ_LF = dQ_LF;
+        pre_dQ_RF = dQ_RF;
+        pre_dQ_LB = dQ_LB;
+        pre_dQ_RB = dQ_RB;
+        prevQ_LF = Q_LF;
+        prevQ_RF = Q_RF;
+        prevQ_LB = Q_LB;
+        prevQ_RB = Q_RB;
+        Q_LF = fullBodyIKan(Pf_LF, Pcom, torsoRot, 1);
+        Q_RF = fullBodyIKan(Pf_RF, Pcom, torsoRot, 2);
+        Q_LB = fullBodyIKan(Pf_LB, Pcom, torsoRot, 3);
+        Q_RB = fullBodyIKan(Pf_RB, Pcom, torsoRot, 4);
+
+        dQ_LF << Numdiff(Q_LF(0), prevQ_LF(0), dt), Numdiff(Q_LF(1), prevQ_LF(1), dt), Numdiff(Q_LF(2), prevQ_LF(2), dt);
+        dQ_RF << Numdiff(Q_RF(0), prevQ_RF(0), dt), Numdiff(Q_RF(1), prevQ_RF(1), dt), Numdiff(Q_RF(2), prevQ_RF(2), dt);
+        dQ_LB << Numdiff(Q_LB(0), prevQ_LB(0), dt), Numdiff(Q_LB(1), prevQ_LB(1), dt), Numdiff(Q_LB(2), prevQ_LB(2), dt);
+        dQ_RB << Numdiff(Q_RB(0), prevQ_RB(0), dt), Numdiff(Q_RB(1), prevQ_RB(1), dt), Numdiff(Q_RB(2), prevQ_RB(2), dt);
+
+        ddQ_LF << Numdiff(dQ_LF(0), pre_dQ_LF(0), dt), Numdiff(dQ_LF(1), pre_dQ_LF(1), dt), Numdiff(dQ_LF(2), pre_dQ_LF(2), dt);
+        ddQ_RF << Numdiff(dQ_RF(0), pre_dQ_RF(0), dt), Numdiff(dQ_RF(1), pre_dQ_RF(1), dt), Numdiff(dQ_RF(2), pre_dQ_RF(2), dt);
+        ddQ_LB << Numdiff(dQ_LB(0), pre_dQ_LB(0), dt), Numdiff(dQ_LB(1), pre_dQ_LB(1), dt), Numdiff(dQ_LB(2), pre_dQ_LB(2), dt);
+        ddQ_RB << Numdiff(dQ_RB(0), pre_dQ_RB(0), dt), Numdiff(dQ_RB(1), pre_dQ_RB(1), dt), Numdiff(dQ_RB(2), pre_dQ_RB(2), dt);
+
+        /* VMC CONTROLLER FOR TORSO */
+        prevZcom_act = Zcom_act;
+        Zcom_act = genCoordinates(2);
+        //Zcom_act = foot2Com_FK(Pf_LF(2), imuRot, q_LF, 30*PI/180);
+       /* dZcom_act = Numdiff(Zcom_act, prevZcom_act, dt);
+        Fzmb = 10 * (Zcom - Zcom_act) + 5 * (0 - dZcom_act) - MASS * GRAVITY;
+        Mxmb = 10 * (0 * PI / 180 - imuRot(0)) + 5 * (0 - dimuRot(0));
+        Mymb = 10 * (0 * PI / 180 - imuRot(1)) + 5 * (0 - dimuRot(1));
+        Mzmb = 10 * (0 * PI / 180 - imuRot(2)) + 5 * (0 - dimuRot(2));
+        Fmatrix = VMC5(t, Ts, Td, Nphase, Kphase, Q_LF, Q_RF, Q_LB, Q_RB, (Pf_LF - Pcom), (Pf_RF - Pcom), (Pf_LB - Pcom), (Pf_RB - Pcom), Pcom, -Fzmb, -Mxmb, -Mymb, -Mzmb, dt);*/
+        Fxmb = -MASS * ddXcom; Fymb = -MASS * ddYcom; Fzmb = -MASS * GRAVITY; Mxmb = (Yzmp-Rcom(1)) * (MASS * GRAVITY); Mymb = (Xzmp-Rcom(0)) * (MASS * GRAVITY); Mzmb = 0;
+        //Fmatrix = VMC6((Pf_LF - Rcom), (Pf_RF - Rcom), (Pf_LB - Rcom), (Pf_RB - Rcom), Rcom, -Fxmb, -Fymb, -Fzmb, -Mxmb, -Mymb, -Mzmb, dt);
+        Fmatrix = refForceCalc4(Pf_LF, Pf_RF, Pf_LB, Pf_RB, Q_LF, Q_RF, Q_LB, Q_RB, dt);
+        // Fmatrix = refForceCalcQP(torsoRot, Q_LF, Q_RF, Q_LB, Q_RB, Pcom, ddXcom, ddYcom, dt);
+        F1cont << 0*Fmatrix(0, 0), 0*Fmatrix(0, 1), Fmatrix(0, 2);
+        F2cont << 0*Fmatrix(1, 0), 0*Fmatrix(1, 1), Fmatrix(1, 2);
+        F3cont << 0*Fmatrix(2, 0), 0*Fmatrix(2, 1), Fmatrix(2, 2);
+        F4cont << 0*Fmatrix(3, 0), 0*Fmatrix(3, 1), Fmatrix(3, 2);
+        
+        /* INVERSE DYNAMICS */
+        rootOrientation = quat2Rotmat(genCoordinates(3), genCoordinates(4), genCoordinates(5), genCoordinates(6));
+        rootAngvelocity << genVelocity(3), genVelocity(4), genVelocity(5);
+        rootAngacceleration << genAcceleration(3), genAcceleration(4), genAcceleration(5);
+
+        rootAbsposition << genCoordinates(0), genCoordinates(1), genCoordinates(2);
+        rootAbsvelocity << genVelocity(0), genVelocity(1), genVelocity(2);
+        rootAbsacceleration << genAcceleration(0), genAcceleration(1), genAcceleration(2);
+
+        jPositions << q_LF(0), q_LF(1), q_LF(2), q_RF(0), q_RF(1), q_RF(2), q_LB(0), q_LB(1), q_LB(2), q_RB(0), q_RB(1), q_RB(2);
+        jVelocities << dq_LF(0), dq_LF(1), dq_LF(2), dq_RF(0), dq_RF(1), dq_RF(2), dq_LB(0), dq_LB(1), dq_LB(2), dq_RB(0), dq_RB(1), dq_RB(2);
+        jAccelerations << ddQ_LF(0), ddQ_LF(1), ddQ_LF(2), ddQ_RF(0), ddQ_RF(1), ddQ_RF(2), ddQ_LB(0), ddQ_LB(1), ddQ_LB(2), ddQ_RB(0), ddQ_RB(1), ddQ_RB(2);
+
+        jffTorques = funNewtonEuler4Leg(rootAbsacceleration, rootOrientation, rootAngvelocity, rootAngacceleration, jPositions, jVelocities, jAccelerations, F1cont, F2cont, F3cont, F4cont);
+        jffTorques2 = funNewtonEuler4Leg(rootAbsacceleration, rootOrientation, rootAngvelocity*0, rootAngacceleration, jPositions, jVelocities*0, jAccelerations, F1cont*0, F2cont*0, F3cont*0, F4cont*0);
+
+        /* INVERSE DYNAMICS WITH RAISIM*/
+        Tau1_JF = JacTranspose_LF(q_LF(0), q_LF(1), q_LF(2), 30*PI/180) * (rootOrientation.transpose() * F1cont);
+        Tau2_JF = JacTranspose_RF(q_RF(0), q_RF(1), q_RF(2), -30*PI/180) * (rootOrientation.transpose() * F2cont);
+        Tau3_JF = JacTranspose_LB(q_LB(0), q_LB(1), q_LB(2), -30*PI/180) * (rootOrientation.transpose() * F3cont);
+        Tau4_JF = JacTranspose_RB(q_RB(0), q_RB(1), q_RB(2), 30*PI/180) * (rootOrientation.transpose() * F4cont);
+
+        JF << 0, 0, 0, 0, 0, 0, Tau1_JF(0), Tau1_JF(1), Tau1_JF(2), Tau2_JF(0), Tau2_JF(1), Tau2_JF(2), Tau3_JF(0), Tau3_JF(1), Tau3_JF(2), Tau4_JF(0), Tau4_JF(1), Tau4_JF(2);
+        genAccelerationVec << genAcceleration(0), genAcceleration(1), genAcceleration(2), rootAngacceleration(0), rootAngacceleration(1), rootAngacceleration(2), ddQ_LF(0), ddQ_LF(1), ddQ_LF(2), ddQ_RF(0), ddQ_RF(1), ddQ_RF(2), ddQ_LB(0), ddQ_LB(1), ddQ_LB(2), ddQ_RB(0), ddQ_RB(1), ddQ_RB(2);
+        jointTorques = quadruped->getMassMatrix().e() * genAccelerationVec + quadruped->getNonlinearities(world.getGravity()).e() - 0*JF;
+
+        /* PD CONTROLLER */
+        for (int i = 0; i < 3; i++)
+        {
+            // i = 0: Hip AA, i = 1: Hip FE, i = 2: Knee FE
+            Tau_LF(i) = Kp(i)*(Q_LF(i) - q_LF(i)) + Kd(i)*(dQ_LF(i) - dq_LF(i)) + jffTorques(i);
+            Tau_RF(i) = Kp(i)*(Q_RF(i) - q_RF(i)) + Kd(i)*(dQ_RF(i) - dq_RF(i)) + jffTorques(i+3);
+            Tau_LB(i) = Kp(i)*(Q_LB(i) - q_LB(i)) + Kd(i)*(dQ_LB(i) - dq_LB(i)) + jffTorques(i+6);
+            Tau_RB(i) = Kp(i)*(Q_RB(i) - q_RB(i)) + Kd(i)*(dQ_RB(i) - dq_RB(i)) + jffTorques(i+9);
+        }
+
+        /* SEND COMMEND TO THE ROBOT */
+        F << 0, 0, 0, 0, 0, 0, Tau_LF(0), Tau_LF(1), Tau_LF(2), Tau_RF(0), Tau_RF(1), Tau_RF(2), Tau_LB(0), Tau_LB(1), Tau_LB(2), Tau_RB(0), Tau_RB(1), Tau_RB(2);
+        quadruped->setGeneralizedForce(F);
+
+        /* PUSH ROBOT */
+        Eigen::Vector3d F_ex;
+        if (t > 6.13 && t < 6.23)
+        {
+            F_ex << 0, 100, 0;
+        }
+        else 
+        {
+            F_ex << 0, 0, 0;
+        }
+        //quadruped->setExternalForce(quadruped->getBodyIdx("torso"), F_ex);
+                
+        server.setCameraPositionAndLookAt({genCoordinates(0)-1.3,genCoordinates(1),genCoordinates(2)+0.6}, {genCoordinates(0),genCoordinates(1),genCoordinates(2)});
+                
+        /* Log data (fp0:NewtonEulerTorques, fp1:PD_torques, fp2: InvDynTorques ) */
+        fprintf(fp0, "%f %f %f %f %f %f %f %f\n", t, Xcom, Ycom, dXcom, dYcom, t, cmd_Vx_lpf, cmd_Vy_lpf);
+                 
+        server.integrateWorldThreadSafe();
+    }
+    server.killServer();
+    fclose(fp0);
+    al_destroy_event_queue(event_queue);
+    al_release_joystick(joystick);
+    std::cout << "end of simulation" << std::endl;
+}
