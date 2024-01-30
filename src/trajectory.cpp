@@ -1,147 +1,158 @@
 #include "trajectory.hpp"
 #include "functions.cpp"
 
-void xboxController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_EVENT event, double &Vx_mean, double &Vy_mean, bool &walkEnable, bool &close)
+void xboxController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_EVENT event, ALLEGRO_JOYSTICK* joyStick, double (&joyCmd)[22], bool &walkEnable, bool &close)
 {
     
     /* Gamepad routines */
     al_wait_for_event_timed(event_queue, &event, 0.0001);
     switch (event.type) {
-    case ALLEGRO_EVENT_DISPLAY_CLOSE:
-        close = true;
-        break;
-    case ALLEGRO_EVENT_JOYSTICK_AXIS:
-        // Handle gamepad axis events
-        switch (event.joystick.stick) {
-        case 0: /* Left Stick */
-            switch (event.joystick.axis) {
-            case 0: /* y axis */
-                Vy_mean = -0.2*event.joystick.pos;
-                if(abs(Vy_mean) < 0.03){ Vy_mean = 0.0; }
-                break;
-            case 1: /* x axis */
-                Vx_mean = -Kv*event.joystick.pos;                                
-                if(abs(Vx_mean) < 0.03){ Vx_mean = 0.0; }
-                break;
+        case ALLEGRO_EVENT_JOYSTICK_CONFIGURATION:
+            printf("Joystick configuration changed.\n");
+            break;
+        case ALLEGRO_EVENT_JOYSTICK_AXIS:
+            // Handle gamepad axis events
+            switch (event.joystick.stick) {
+                case 0: /* Left Stick */
+                    switch (event.joystick.axis) {
+                        case 0: /* y axis */
+                            Vy_mean = -0.15*event.joystick.pos;
+                            Vy_mean = floor(Vy_mean*10000)/10000; /* Truncate to 3 decimal */
+                            if(abs(Vy_mean)<0.03) { Vy_mean = 0.0; }
+                            joyCmd[1] = Vy_mean;
+                            break;
+                        case 1: /* x axis */
+                            Vx_mean = -Kv*event.joystick.pos;                                
+                            Vx_mean = floor(Vx_mean*10000)/10000; /* Truncate to 3 decimal */
+                            if(abs(Vx_mean)<0.03) { Vx_mean = 0.0; }
+                            joyCmd[0] = Vx_mean;
+                            break;
+                    }
+                    break;                    
+                case 1: /* Right Stick */
+                    switch (event.joystick.axis) {
+                        case 0: /* y axis */
+                            std::cout << event.joystick.axis << ": " << event.joystick.pos << std::endl;
+                            break;
+                        case 1: /* x axis */
+                            std::cout << event.joystick.axis << ": " << event.joystick.pos << std::endl;
+                            break;
+                    }
+                    break; 
+                case 2: /* D-pad */
+                    switch (event.joystick.axis) {
+                        case 0: /* D-pad x axis */                    
+                            break;                    
+                        case 1: /* D-pad y axis */
+                            if(event.joystick.pos == -1) /* D-pad Up */
+                            {
+                                if(Kv > 0.6){Kv = 0.6;}                                
+                                else { Kv = Kv + 0.2; }
+                                std::cout << "Max. Vel. Set to:" << Kv << std::endl;
+                            }
+                            else if(event.joystick.pos == 1) /* D-pad Down */
+                            {
+                                if(Kv <= 0.2){Kv = 0.2;}                                
+                                else { Kv = Kv - 0.2; }
+                                std::cout << "Max. Vel. Set to:" << Kv << std::endl;
+                            }
+                            else
+                            {
+                                Kv = Kv;
+                            }
+                            break;
+                    }
+                    break; 
             }
-            break;                    
-        case 1: /* Right Stick */
-            switch (event.joystick.axis) {
-            case 0: /* y axis */
-                std::cout << event.joystick.axis << ": " << event.joystick.pos << std::endl;
-                break;
-            case 1: /* x axis */
-                std::cout << event.joystick.axis << ": " << event.joystick.pos << std::endl;
-                break;
+            break;
+        case ALLEGRO_EVENT_JOYSTICK_BUTTON_DOWN:
+            switch (event.joystick.button){
+                case 0:
+                    /* Y Button */
+                    std::cout << "Y: " << event.joystick.button << std::endl;
+                    break;
+                case 1:
+                    /* B Button */
+                    std::cout << "B: " << event.joystick.button << std::endl;
+                    break;
+                case 2:
+                    /* A Button */
+                    std::cout << "A: " << event.joystick.button << std::endl;
+                    break;
+                case 3:
+                    /* X Button */
+                    std::cout << "X: " << event.joystick.button << std::endl;
+                    break;
+                case 4:
+                    /* LB Button */
+                    std::cout << "LB: " << event.joystick.button << std::endl;
+                    break;
+                case 5:
+                    /* RB Button */
+                    std::cout << "RB: " << event.joystick.button << std::endl;
+                    break;
+                case 6:
+                    /* LT Button */
+                    std::cout << "LT: " << event.joystick.button << std::endl;
+                    break;
+                case 7:
+                    /* RT Button */
+                    std::cout << "RT: " << event.joystick.button << std::endl;
+                    break;
+                case 8:
+                    /* Back Button */
+                    std::cout << "Back: " << event.joystick.button << std::endl;
+                    close = true;
+                    break;
+                case 9:
+                    /* Start Button */
+                    if(walkEnable){ 
+                        walkEnable = false; 
+                    }
+                    else{ 
+                        walkEnable = true; 
+                    }            
+                    break;
+                case 10:
+                    /* Back Button */
+                    std::cout << "LSB: " << event.joystick.button << std::endl;
+                    break;
+                case 11:
+                    /* Start Button */
+                    std::cout << "RSB: " << event.joystick.button << std::endl;
+                    break;
+                
+                default:
+                    break;
             }
-            break; 
-        case 2: /* D-pad */
-            switch (event.joystick.axis) {
-            case 0: /* D-pad x axis */                    
-                break;                    
-            case 1: /* D-pad y axis */
-                if(event.joystick.pos == -1) /* D-pad Up */
-                {
-                    if(Kv > 0.6){Kv = 0.6;}                                
-                    else { Kv = Kv + 0.2; }
-                    std::cout << "Max. Vel. Set to:" << Kv << std::endl;
-                }
-                else if(event.joystick.pos == 1) /* D-pad Down */
-                {
-                    if(Kv <= 0.2){Kv = 0.2;}                                
-                    else { Kv = Kv - 0.2; }
-                    std::cout << "Max. Vel. Set to:" << Kv << std::endl;
-                }
-                else
-                {
-                    Kv = Kv;
-                }
-                break;
-            }
-            break; 
-        }
-        break;
-    case ALLEGRO_EVENT_JOYSTICK_BUTTON_DOWN:
-        switch (event.joystick.button){
-        case 0:
-            /* Y Button */
-            std::cout << "Y: " << event.joystick.button << std::endl;
             break;
-        case 1:
-            /* B Button */
-            std::cout << "B: " << event.joystick.button << std::endl;
+        case ALLEGRO_EVENT_JOYSTICK_BUTTON_UP:
+            // Handle gamepad button up events
+            // event.joystick.button contains the button ID
+            // Add your game logic here
             break;
-        case 2:
-            /* A Button */
-            std::cout << "A: " << event.joystick.button << std::endl;
-            break;
-        case 3:
-            /* X Button */
-            std::cout << "X: " << event.joystick.button << std::endl;
-            break;
-        case 4:
-            /* LB Button */
-            std::cout << "LB: " << event.joystick.button << std::endl;
-            break;
-        case 5:
-            /* RB Button */
-            std::cout << "RB: " << event.joystick.button << std::endl;
-            break;
-        case 6:
-            /* LT Button */
-            std::cout << "LT: " << event.joystick.button << std::endl;
-            break;
-        case 7:
-            /* RT Button */
-            std::cout << "RT: " << event.joystick.button << std::endl;
-            break;
-        case 8:
-            /* Back Button */
-            std::cout << "Back: " << event.joystick.button << std::endl;
-            close = true;
-            break;
-        case 9:
-            /* Start Button */
-            if(walkEnable){ 
-                walkEnable = false; 
-            }
-            else{ 
-                walkEnable = true; 
-            }            
-            break;
-        case 10:
-            /* Back Button */
-            std::cout << "LSB: " << event.joystick.button << std::endl;
-            break;
-        case 11:
-            /* Start Button */
-            std::cout << "RSB: " << event.joystick.button << std::endl;
-            break;
-        
+        // Add more cases for other event types if needed
         default:
+            // Handle other event types or do nothing
             break;
-        }
-        break;
-    case ALLEGRO_EVENT_JOYSTICK_BUTTON_UP:
-        // Handle gamepad button up events
-        // event.joystick.button contains the button ID
-        // Add your game logic here
-        break;
-    // Add more cases for other event types if needed
-    default:
-        // Handle other event types or do nothing
-        break;
     }
 }
 
 void dualShockController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_EVENT ev, double (&joyCmd)[22], bool &walkEnable, bool &close)
 {
+    ALLEGRO_JOYSTICK *joyStick = al_get_joystick(0);
+    ALLEGRO_JOYSTICK_STATE joyState;
+    if(joyStick) {al_get_joystick_state(joyStick, &joyState);}
+
     double Vx_mean = 0.0, Vy_mean = 0.0;
-    double cmdZc = 0.0, cmdHeight = 0.0;
+    double cmdZc = Zc; 
+    double decreaseHeight = 0.0, increaseHeight = 0.0;;
     double roll = 0.0, pitch = 0.0, yaw = 0.0;
 
-    al_wait_for_event_timed(event_queue, &ev,0.00001);
+    al_wait_for_event_timed(event_queue, &ev,0.0001);
     switch (ev.type) {
+        case ALLEGRO_EVENT_JOYSTICK_CONFIGURATION:
+            al_reconfigure_joysticks();
         case ALLEGRO_EVENT_JOYSTICK_AXIS:
             switch (ev.joystick.stick) {
                 case 0: /* Left-Stick */                        
@@ -164,25 +175,43 @@ void dualShockController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_EVENT ev, dou
                     break;                    
                 case 1: /* Right stick y-axis and L2 axis */
                     switch (ev.joystick.axis) {
-                        case 0:
-                            // std::cout << "L2 axis: " << ev.joystick.pos << std::endl;
+                        case 0: /* L2 axis */
+                            cmdZc = mapVal(ev.joystick.pos, 1.0, -1.0, MIN_BODY_HEIGHT, Zc);
+                            joyCmd[5] = cmdZc;
                             break;
                         case 1:
                             // std::cout << "Right stick y-axis: " << ev.joystick.pos << std::endl;
-                            if(walkEnable) { yaw = -0.17*ev.joystick.pos; }
-                            else { yaw = -0.35*ev.joystick.pos; }
+                            if(walkEnable) { 
+                                yaw = -0.17*ev.joystick.pos;
+                                roll = 0.0; 
+                            }
+                            else {
+                                if(joyState.button[4]) { roll = 0.174*ev.joystick.pos; }
+                                else { yaw = -0.35*ev.joystick.pos; }                                 
+                            }
                             if(abs(yaw) < 0.03) { yaw = 0.0;}
+                            if(abs(roll) < 0.03) { roll = 0.0;}
                             joyCmd[2] = yaw;
+                            joyCmd[4] = roll;
                             break;
                     }
                     break;
                 case 2: /* Right stick x-axis and R2 axis */
                     switch (ev.joystick.axis) {
-                        case 0:
+                        case 0: /* Right stick x-axis */
                             // std::cout << "Right stick x-axis: " << ev.joystick.pos << std::endl;
+                            if(!walkEnable) { 
+                                pitch = 0.1*ev.joystick.pos;
+                            }                               
+                            else { 
+                                pitch = 0.0;
+                            }
+                            if(abs(pitch) < 0.03) { pitch = 0.0;}
+                            joyCmd[3] = pitch;
                             break;
-                        case 1:
-                            // std::cout << "R2 axis: " << ev.joystick.pos << std::endl;
+                        case 1: /* R2 axis */
+                            cmdZc = mapVal(ev.joystick.pos, 1.0, -1.0, MAX_BODY_HEIGHT, Zc);
+                            joyCmd[5] = cmdZc;
                             break;
                     }
                     break;
@@ -195,7 +224,7 @@ void dualShockController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_EVENT ev, dou
                             Kv = Kv - 0.1*ev.joystick.pos;
                             if(Kv >= 0.6) { Kv = 0.6;}
                             else if(Kv <= 0.1) { Kv = 0.1; }
-                            std::cout << "Max. Vel. set to: " << Kv << std::endl;                  
+                            if(abs(ev.joystick.pos)) { std::cout << "Max. Vel. set to: " << Kv << std::endl; }                                              
                             break;
                     }
                     break;
@@ -203,79 +232,64 @@ void dualShockController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_EVENT ev, dou
             break;
         case ALLEGRO_EVENT_JOYSTICK_BUTTON_DOWN:
             switch (ev.joystick.button) {
-                // case 0:
-                //     /* Y Button */
+                // case 0: /* X Button */
                 //     std::cout << "X: " << ev.joystick.button << std::endl;
                 //     break;
-                // case 1:
-                //     /* B Button */
+                // case 1: /* Circle Button */
                 //     std::cout << "Circle: " << ev.joystick.button << std::endl;
                 //     break;
-                // case 2:
-                //     /* A Button */
+                // case 2: /* Triangle Button */
                 //     std::cout << "Triangle: " << ev.joystick.button << std::endl;
                 //     break;
-                // case 3:
-                //     /* X Button */
+                // case 3: /* Square Button */
                 //     std::cout << "Square: " << ev.joystick.button << std::endl;
                 //     break;
-                // case 4:
-                //     /* LB Button */
-                //     std::cout << "L1: " << ev.joystick.button << std::endl;
+                // case 4: /* L1 Button */
+                //     std::cout << "L1: " << ev.joystick.button << std::endl;                                        
                 //     break;
-                // case 5:
-                //     /* RB Button */
+                // case 5: /* R1 Button */
                 //     std::cout << "R1: " << ev.joystick.button << std::endl;
                 //     break;
-                // case 6:
-                //     /* LT Button */
-                //     std::cout << "L2: " << ev.joystick.button << std::endl;
-                //     break;
-                // case 7:
-                //     /* RT Button */
-                //     std::cout << "R2: " << ev.joystick.button << std::endl;
-                //     break;
-                case 8:
-                    /* Back Button */
-                    std::cout << "Share: " << ev.joystick.button << std::endl;
-                    close = true;
+                case 6: /* L2 Button */
+                    std::cout << "L2: " << ev.joystick.button << std::endl;
                     break;
-                case 9:
-                    /* Options */
+                case 7: /* R2 Button */
+                    std::cout << "R2: " << ev.joystick.button << std::endl;
+                    break;
+                case 8: /* Back Button */
+                    // std::cout << "Share: " << ev.joystick.button << std::endl;
+                    close = true;
+                    al_release_joystick(joyStick);
+
+                    break;
+                case 9: /* Options */
                     if(walkEnable){ 
                         walkEnable = false;
                         std::cout << "Walking mode disabled!" << std::endl; 
                     }
                     else{ 
                         walkEnable = true;
-                        // walkStartTime = realTime;
                         std::cout << "Walking mode enabled!" << std::endl;
                     } 
                     break;
-                // case 10:
-                //     /* Back Button */
+                // case 10: /* PS Button */
                 //     std::cout << "PS: " << ev.joystick.button << std::endl;
                 //     break;
-                // case 11:
-                //     /* Start Button */
+                // case 11: /* LS Button */
                 //     std::cout << "LS: " << ev.joystick.button << std::endl;
                 //     break;
-                // case 12:
-                //     /* Start Button */
+                // case 12: /* RS Button */
                 //     std::cout << "RS: " << ev.joystick.button << std::endl;
                 //     break;
                 
                 default:
                     break;
             }
-
-            // Add your game logic here
             break;
         case ALLEGRO_EVENT_JOYSTICK_BUTTON_UP:
             // Handle gamepad button up events
             // ev.joystick.button contains the button ID
             // std::cout << ev.joystick.button << std::endl;
-
             // Add your game logic here
             break;
         // Add more cases for other event types if needed
@@ -321,7 +335,7 @@ Eigen::VectorXd comTrajectory(double RealTime, double Ts, double Td, int Nphase,
         kx = floor(Rt4Fr / 2);
     }
     /* Phase Calculation Start(Each Ts + Td is one phase) */
-
+        
     // Xcom parameters
     double Cxd = (px + vx_mean * Ts / 2);
     double Cx0 = (2 * px - Cxd);
@@ -345,7 +359,7 @@ Eigen::VectorXd comTrajectory(double RealTime, double Ts, double Td, int Nphase,
     double Ky = d_dCy0 + w * (Cyd - py) * 1 / tanh(w * Td / 2);
     double Stry = 2 * Td * Ky;
     double Cyd0 = Cy0 + Stry / 2;
-
+    
     /* CoM Trajectory Start */
     if (FuncInterval(RealTime, t0, t1, dt) == true) // Put robot on the ground
     {
@@ -460,16 +474,15 @@ Eigen::VectorXd comTrajectory(double RealTime, double Ts, double Td, int Nphase,
     {
         if (((k + 1) % 2) == 0) // Left foot swing, right foot stand
         {
-            double ts_r = tstart_w + (Ts + Td) * k;
-            double ts_l = tstart_w + (Ts + Td) * k;
+            double ts = tstart_w + (Ts + Td) * k;
             
-            trajFootx_L = FuncPoly5th(RealTime, ts_l, ts_l + Ts, Strx / 2 + Strx * kx, 0, 0, Strx / 2 + Strx * (kx + 1), 0, 0);
-            trajFooty_L = FuncPoly5th(RealTime, ts_l, ts_l + Ts, Stry / 2 + Stry * kx, 0, 0, Stry / 2 + Stry * (kx + 1), 0, 0);
-            trajFootz_L = FuncPoly6th(RealTime, ts_l, ts_l + Ts, 0, 0, 0, 0, 0, 0, Fh);
+            trajFootx_L = FuncPoly5th(RealTime, ts, ts + Ts, Strx / 2 + Strx * kx, 0, 0, Strx / 2 + Strx * (kx + 1), 0, 0);
+            trajFooty_L = FuncPoly5th(RealTime, ts, ts + Ts, Stry / 2 + Stry * kx, 0, 0, Stry / 2 + Stry * (kx + 1), 0, 0);
+            trajFootz_L = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, Fh);
 
-            trajFootx_R = FuncPoly5th(RealTime, ts_r, ts_r + Ts, Strx * (kx + 1), 0, 0, Strx * (kx + 1), 0, 0);
-            trajFooty_R = FuncPoly5th(RealTime, ts_r, ts_r + Ts, Stry * (kx + 1), 0, 0, Stry * (kx + 1), 0, 0);
-            trajFootz_R = FuncPoly6th(RealTime, ts_r, ts_r + Ts, 0, 0, 0, 0, 0, 0, 0);
+            trajFootx_R = FuncPoly5th(RealTime, ts, ts + Ts, Strx * (kx + 1), 0, 0, Strx * (kx + 1), 0, 0);
+            trajFooty_R = FuncPoly5th(RealTime, ts, ts + Ts, Stry * (kx + 1), 0, 0, Stry * (kx + 1), 0, 0);
+            trajFootz_R = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, 0);
 
             Posx_l = trajFootx_L(0); Velx_l = trajFootx_L(1); Accx_l = trajFootx_L(2);
             Posy_l = trajFooty_L(0); Vely_l = trajFooty_L(1); Accy_l = trajFooty_L(2);
@@ -481,16 +494,15 @@ Eigen::VectorXd comTrajectory(double RealTime, double Ts, double Td, int Nphase,
         }
         else // Right foot swing, left foot stand
         {
-            double ts_r = tstart_w + (Ts + Td) * k;
-            double ts_l = tstart_w + (Ts + Td) * k;
+            double ts = tstart_w + (Ts + Td) * k;
 
-            trajFootx_L = FuncPoly5th(RealTime, ts_l, ts_l + Ts, Strx / 2 + Strx * kx, 0, 0, Strx / 2 + Strx * kx, 0, 0);
-            trajFooty_L = FuncPoly5th(RealTime, ts_l, ts_l + Ts, Stry / 2 + Stry * kx, 0, 0, Stry / 2 + Stry * kx, 0, 0);
-            trajFootz_L = FuncPoly6th(RealTime, ts_l, ts_l + Ts, 0, 0, 0, 0, 0, 0, 0);
+            trajFootx_L = FuncPoly5th(RealTime, ts, ts + Ts, Strx / 2 + Strx * kx, 0, 0, Strx / 2 + Strx * kx, 0, 0);
+            trajFooty_L = FuncPoly5th(RealTime, ts, ts + Ts, Stry / 2 + Stry * kx, 0, 0, Stry / 2 + Stry * kx, 0, 0);
+            trajFootz_L = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, 0);
 
-            trajFootx_R = FuncPoly5th(RealTime, ts_r, ts_r + Ts, Strx * kx, 0, 0, Strx * (kx + 1), 0, 0);
-            trajFooty_R = FuncPoly5th(RealTime, ts_r, ts_r + Ts, Stry * kx, 0, 0, Stry * (kx + 1), 0, 0);
-            trajFootz_R = FuncPoly6th(RealTime, ts_r, ts_r + Ts, 0, 0, 0, 0, 0, 0, Fh);
+            trajFootx_R = FuncPoly5th(RealTime, ts, ts + Ts, Strx * kx, 0, 0, Strx * (kx + 1), 0, 0);
+            trajFooty_R = FuncPoly5th(RealTime, ts, ts + Ts, Stry * kx, 0, 0, Stry * (kx + 1), 0, 0);
+            trajFootz_R = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, Fh);
 
             Posx_l = trajFootx_L(0); Velx_l = trajFootx_L(1); Accx_l = trajFootx_L(2);
             Posy_l = trajFooty_L(0); Vely_l = trajFooty_L(1); Accy_l = trajFooty_L(2);
@@ -558,7 +570,7 @@ Eigen::VectorXd comTrajectory(double RealTime, double Ts, double Td, int Nphase,
     return returnVals;
 }
 
-Eigen::VectorXd trajGeneration(double RealTime, bool walkEnable, double command_Vx, double command_Vy, double dt)
+Eigen::VectorXd trajGeneration(double RealTime, bool walkEnable, double command_Vx, double command_Vy, double height, double dt)
 {
     Eigen::VectorXd outVals(13);
     double footPx_R = 0.0, footPy_R = 0, footPz_R = 0.0;
@@ -590,12 +602,12 @@ Eigen::VectorXd trajGeneration(double RealTime, bool walkEnable, double command_
     if((prev_vx_mean != Vx_mean) || (prev_vy_mean != Vy_mean)){
         if(AreDoubleSame(walkTraj(8),Fc)){
             w_start_time = RealTime - Ts - Td - Ts/2.0;
-            walkTraj = comTrajectory(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, Cz, Fc, dt);
+            walkTraj = comTrajectory(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, height, Fc, dt);
             if(prev_vx_mean != Vx_mean) Cx -= walkTraj(13);
             if(prev_vy_mean != Vy_mean) Cy -= walkTraj(15);
         }else if(AreDoubleSame(walkTraj(11),Fc)){
             w_start_time = RealTime - Ts - Td - Ts - Td - Ts/2.0 ;
-            walkTraj = comTrajectory(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, Cz, Fc, dt);
+            walkTraj = comTrajectory(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, height, Fc, dt);
             if(prev_vx_mean != Vx_mean) Cx -= walkTraj(12);
             if(prev_vy_mean != Vy_mean) Cy -= walkTraj(14);
         }
@@ -611,13 +623,13 @@ Eigen::VectorXd trajGeneration(double RealTime, bool walkEnable, double command_
         Nphase = 0;
     }
     
-    walkTraj = comTrajectory(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, Cz, Fc, dt);
+    walkTraj = comTrajectory(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, height, Fc, dt);
     Xc = walkTraj(0)+Cx; Yc = walkTraj(3)+Cy;
     dXc = walkTraj(1); dYc = walkTraj(4); 
     ddXc = walkTraj(2); ddYc = walkTraj(5);
     footPx_R = walkTraj(6)+Cx; footPy_R = walkTraj(7)+Cy; footPz_R = walkTraj(8);
     footPx_L = walkTraj(9)+Cx; footPy_L = walkTraj(10)+Cy; footPz_L = walkTraj(11);
 
-    outVals << Xc, dXc, ddXc, Yc, dYc, ddYc, Cz, footPx_R, footPx_L, footPy_R, footPy_L, footPz_R, footPz_L;
+    outVals << Xc, dXc, ddXc, Yc, dYc, ddYc, height, footPx_R, footPx_L, footPy_R, footPy_L, footPz_R, footPz_L;
     return outVals;
 }

@@ -6,8 +6,8 @@
                 "${workspaceFolder}/**",
                 "/home/erim/raisim_ws_v1.1.7/install/include",
                 "/usr/include/eigen3",
-                "/usr/include/allegro5",
-                "/home/erim/RaiSim_Simulations/TekirV3/include"
+                "/usr/local/include/allegro5",
+                "/home/erim/RaiSim_Simulations/TekirV3.0.1/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

@@ -5,6 +5,7 @@
 #include <cstdlib>
 
 bool AreDoubleSame(double dFirstVal, double dSecondVal);
+double mapVal(double inVal, double inMax, double inMin, double outMax, double outMin);
 int signFuncCap(double input, double thresHold);
 double numIntegral(double In, double prevIn, double prevOut, double dt);
 bool FuncEqual(double RealTime, double ta, double dt);

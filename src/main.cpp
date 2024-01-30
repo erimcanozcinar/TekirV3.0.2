@@ -32,11 +32,6 @@ int main(int argc, char** argv) {
     al_install_joystick();
     ALLEGRO_EVENT_QUEUE *event_queue = al_create_event_queue();
     al_register_event_source(event_queue, al_get_joystick_event_source());
-    ALLEGRO_JOYSTICK *joystick = al_get_joystick(0);
-    if (!joystick) {
-            al_show_native_message_box(NULL, NULL, NULL, "Failed to open gamepad!", NULL, ALLEGRO_MESSAGEBOX_ERROR);
-            return -1;
-    }
     std::cout << "Gamepad routines enabled." << std::endl;
     ALLEGRO_EVENT event;
 
@@ -52,8 +47,8 @@ int main(int argc, char** argv) {
 
     // Kp << 700, 200, 200;
     // Kd << 70, 20, 20;
-    Kp << 120, 40, 40;
-    Kd << 12, 4, 4;
+    Kp << 120, 70, 70;
+    Kd << 12, 7, 7;
 
     trajOut.setZero();
 
@@ -61,9 +56,7 @@ int main(int argc, char** argv) {
     
     prevdQcm.setZero(); prevQcm.setZero(); prevQcm_filtered.setZero();
 
-    camPos.setZero(); camRot.setZero();
-
-    /* Initialize Rotbot */
+    /* Initialize Robot */
     Pf_LF << Pfx_f, Pfy + LatOut, Pfz;
     Pf_RF << Pfx_f, -Pfy - LatOut, Pfz;
     Pf_LB << -Pfx_b, Pfy + LatOut, Pfz;
@@ -81,6 +74,7 @@ int main(int argc, char** argv) {
     /* Launch raisim server for visualization.Can be visualized on raisimUnity */
     raisim::RaisimServer server(&world);
     server.setMap("default");
+    server.focusOn(quadruped);
     server.launchServer();
 
 
@@ -91,13 +85,15 @@ int main(int argc, char** argv) {
 
         /* TRAJECTORY GENERATION WITH CONTROLLER */
         dualShockController(event_queue, event, cmdJoy, walkEnable, quit);
+        for(int i=0; i<22; i++)
+        {
+            cmdJoyF[i] = LPF(cmdJoy[i], pre_cmdJoyF[i], 2*PI*0.2, dt);
+            pre_cmdJoyF[i] = cmdJoyF[i];
+        }
         cmd_Vx = cmdJoy[0]; cmd_Vy = cmdJoy[1];
-        // cmd_Vx_lpf = LPF(cmd_Vx, pre_cmd_Vx_lpf, 2*PI*1, dt);
-        // cmd_Vy_lpf = LPF(cmd_Vy, pre_cmd_Vy_lpf, 2*PI*1, dt);
-        // pre_cmd_Vx_lpf = cmd_Vx_lpf; pre_cmd_Vy_lpf = cmd_Vy_lpf;
-        cmd_yaw = cmdJoy[2];
+        cmd_yaw = cmdJoyF[2];  cmd_pitch = cmdJoyF[3]; cmd_roll = cmdJoyF[4];
 
-        trajOut = trajGeneration(t, walkEnable, cmd_Vx, cmd_Vy, dt);
+        trajOut = trajGeneration(t, walkEnable, cmd_Vx, cmd_Vy, cmdJoyF[5], dt);
         Xcom = trajOut(0), Ycom = trajOut(3);
         dXcom = trajOut(1), dYcom = trajOut(4);
         ddXcom = trajOut(2), ddYcom = trajOut(5);
@@ -197,7 +193,8 @@ int main(int argc, char** argv) {
         Pcom << Xcom, Ycom, Zcom;
         Rcom << genCoordinates(0), genCoordinates(1), genCoordinates(2);
         //torsoRot << -imuRot(0), -imuRot(1), -imuRot(2); // Torso Orientation
-        torsoRot << 0*PI/180, 0*PI/180, cmd_yaw; // Torso Orientation
+        torsoRot << cmd_roll, cmd_pitch, cmd_yaw; // Torso Orientation
+        
         Pf_LF << Px_Lfoot + Pfx_f, Py_Lfoot + Pfy + LatOut, Pfz + Pz_Lfoot;
         Pf_RF << Px_Rfoot + Pfx_f, Py_Rfoot - Pfy - LatOut, Pfz + Pz_Rfoot;
         Pf_LB << Px_Rfoot - Pfx_b, Py_Rfoot + Pfy + LatOut, Pfz + Pz_Rfoot;
@@ -301,13 +298,12 @@ int main(int argc, char** argv) {
         server.setCameraPositionAndLookAt({genCoordinates(0)-1.3,genCoordinates(1),genCoordinates(2)+0.6}, {genCoordinates(0),genCoordinates(1),genCoordinates(2)});
                 
         /* Log data (fp0:NewtonEulerTorques, fp1:PD_torques, fp2: InvDynTorques ) */
-        fprintf(fp0, "%f %f %f %f %f %f %f %f\n", t, Xcom, Ycom, dXcom, dYcom, t, cmd_Vx_lpf, cmd_Vy_lpf);
+        fprintf(fp0, "%f %f %f %f %f %f %f %f\n", t, Xcom, Ycom, dXcom, dYcom, t, cmdJoy[5], cmdJoyF[5]);
                  
         server.integrateWorldThreadSafe();
     }
     server.killServer();
     fclose(fp0);
     al_destroy_event_queue(event_queue);
-    al_release_joystick(joystick);
     std::cout << "end of simulation" << std::endl;
 }

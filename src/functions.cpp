@@ -5,6 +5,12 @@ bool AreDoubleSame(double dFirstVal, double dSecondVal)
     return std::fabs(dFirstVal - dSecondVal) <  1E-6;
 }
 
+double mapVal(double inVal, double inMax, double inMin, double outMax, double outMin)
+{
+    double mappedVal = (inVal - inMin)*((outMax-outMin)/(inMax - inMin)) + outMin;
+    return mappedVal;
+}
+
 int signFuncCap(double input, double thresHold)
 {
     int out;

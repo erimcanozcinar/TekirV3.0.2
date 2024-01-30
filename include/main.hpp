@@ -58,12 +58,12 @@ Eigen::Vector3d Kp, Kd;
 
 /* Controller (Joystick) variables */
 bool quit = false;
-double cmdJoy[22];
+double cmdJoy[22] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.53319176863337994221048177223565, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+double cmdJoyF[22] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.53319176863337994221048177223565, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+double pre_cmdJoyF[22] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.53319176863337994221048177223565, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 bool walkEnable = false;
 double cmd_Vx = 0.0, cmd_Vy = 0.0;
-double cmd_Vx_lpf = 0.0, cmd_Vy_lpf = 0.0;
-double pre_cmd_Vx_lpf = 0.0, pre_cmd_Vy_lpf = 0.0;
-double cmd_yaw = 0.0;
+double cmd_yaw = 0.0, cmd_pitch = 0.0, cmd_roll = 0.0;
 
 /* Trajectory Output variables */
 Eigen::VectorXd trajOut(13);
@@ -95,6 +95,3 @@ double Zroll_LF, Zroll_RF, Zroll_LB, Zroll_RB;
 double Zpitch_LF, Zpitch_RF, Zpitch_LB, Zpitch_RB;
 double Kp_roll = 1.0, Kd_roll = 0.0;
 double Kp_pitch = 1.0, Kd_pitch = 0.0;
-
-/* Camera variables */
-Eigen::Vector3d camPos, camRot;
