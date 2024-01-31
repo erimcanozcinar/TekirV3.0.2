@@ -36,6 +36,10 @@ int main(int argc, char** argv) {
     ALLEGRO_EVENT event;
 
     /* Init Eigen variables */
+    Itorso << 0.410, 0, 0,
+              0, 0.908, 0,
+              0, 0, 1.192;
+
     prevgenVelocity.setZero();
     dQ_LF.setZero(); dQ_RF.setZero(); dQ_LB.setZero(); dQ_RB.setZero();
     Fcon_LF.setZero(); Fcon_RF.setZero(); Fcon_LB.setZero(); Fcon_RB.setZero();
@@ -192,9 +196,8 @@ int main(int argc, char** argv) {
         /* DESIRED FOOT POSITION */
         Pcom << Xcom, Ycom, Zcom;
         Rcom << genCoordinates(0), genCoordinates(1), genCoordinates(2);
-        //torsoRot << -imuRot(0), -imuRot(1), -imuRot(2); // Torso Orientation
-        torsoRot << cmd_roll, cmd_pitch, cmd_yaw; // Torso Orientation
-        
+        torsoRot << cmd_roll, cmd_pitch, cmd_yaw; // Torso Orientation       
+
         Pf_LF << Px_Lfoot + Pfx_f, Py_Lfoot + Pfy + LatOut, Pfz + Pz_Lfoot;
         Pf_RF << Px_Rfoot + Pfx_f, Py_Rfoot - Pfy - LatOut, Pfz + Pz_Rfoot;
         Pf_LB << Px_Rfoot - Pfx_b, Py_Rfoot + Pfy + LatOut, Pfz + Pz_Rfoot;
@@ -225,23 +228,33 @@ int main(int argc, char** argv) {
         ddQ_RB << Numdiff(dQ_RB(0), pre_dQ_RB(0), dt), Numdiff(dQ_RB(1), pre_dQ_RB(1), dt), Numdiff(dQ_RB(2), pre_dQ_RB(2), dt);
 
         /* VMC CONTROLLER FOR TORSO */
-        prevZcom_act = Zcom_act;
-        Zcom_act = genCoordinates(2);
-        //Zcom_act = foot2Com_FK(Pf_LF(2), imuRot, q_LF, 30*PI/180);
-       /* dZcom_act = Numdiff(Zcom_act, prevZcom_act, dt);
-        Fzmb = 10 * (Zcom - Zcom_act) + 5 * (0 - dZcom_act) - MASS * GRAVITY;
-        Mxmb = 10 * (0 * PI / 180 - imuRot(0)) + 5 * (0 - dimuRot(0));
-        Mymb = 10 * (0 * PI / 180 - imuRot(1)) + 5 * (0 - dimuRot(1));
-        Mzmb = 10 * (0 * PI / 180 - imuRot(2)) + 5 * (0 - dimuRot(2));
-        Fmatrix = VMC5(t, Ts, Td, Nphase, Kphase, Q_LF, Q_RF, Q_LB, Q_RB, (Pf_LF - Pcom), (Pf_RF - Pcom), (Pf_LB - Pcom), (Pf_RB - Pcom), Pcom, -Fzmb, -Mxmb, -Mymb, -Mzmb, dt);*/
-        Fxmb = -MASS * ddXcom; Fymb = -MASS * ddYcom; Fzmb = -MASS * GRAVITY; Mxmb = (Yzmp-Rcom(1)) * (MASS * GRAVITY); Mymb = (Xzmp-Rcom(0)) * (MASS * GRAVITY); Mzmb = 0;
-        //Fmatrix = VMC6((Pf_LF - Rcom), (Pf_RF - Rcom), (Pf_LB - Rcom), (Pf_RB - Rcom), Rcom, -Fxmb, -Fymb, -Fzmb, -Mxmb, -Mymb, -Mzmb, dt);
-        Fmatrix = refForceCalc4(Pf_LF, Pf_RF, Pf_LB, Pf_RB, Q_LF, Q_RF, Q_LB, Q_RB, dt);
+        Rf_LF = fullBodyFK(imuRot, {0,0,0}, q_LF, 1);
+        Rf_RF = fullBodyFK(imuRot, {0,0,0}, q_RF, 2);
+        Rf_LB = fullBodyFK(imuRot, {0,0,0}, q_LB, 3);
+        Rf_RB = fullBodyFK(imuRot, {0,0,0}, q_RB, 4);
+
+        dtorsoRot << Numdiff(torsoRot(0), prev_torsoRot(0), dt), Numdiff(torsoRot(1), prev_torsoRot(1), dt), Numdiff(torsoRot(2), prev_torsoRot(2), dt);
+        ddtorsoRot << Numdiff(dtorsoRot(0), prev_dtorsoRot(0), dt), Numdiff(dtorsoRot(1), prev_dtorsoRot(1), dt), Numdiff(dtorsoRot(2), prev_dtorsoRot(2), dt);
+        prev_torsoRot = torsoRot;
+        prev_dtorsoRot = dtorsoRot;
+
+        orientControlRef = QuaternionRef(torsoRot(0), torsoRot(1), torsoRot(2), dtorsoRot(0), dtorsoRot(1), dtorsoRot(2), ddtorsoRot(0), ddtorsoRot(1), ddtorsoRot(2));
+        Eigen::Vector3d Wref, dWref, quatVecRef, quatVec;
+        Wref << orientControlRef(4),orientControlRef(5),orientControlRef(6);
+        dWref << orientControlRef(7),orientControlRef(8),orientControlRef(9);
+        quatVecRef << orientControlRef(1), orientControlRef(2), orientControlRef(3);
+        quatVec << genCoordinates(4), genCoordinates(5), genCoordinates(6);
+
+        Mvmc = Itorso*(dWref + sqrt(50)*(Wref - rootAngvelocity) - 50*(orientControlRef(0)*quatVec - genCoordinates(3)*quatVecRef + vec2SkewSym(quatVecRef)*quatVec));
+
+        Fvmc << MASS*(ddXcom + (ddXcom-genAcceleration(0))*0.1), MASS*(ddYcom + (ddYcom-genAcceleration(1))*0.1), MASS*(GRAVITY + (ddZcom-genAcceleration(2))*0.1), Mvmc(0), Mvmc(1), Mvmc(2);
+        Fmatrix = VMC(Rf_LF, Rf_RF, Rf_LB, Rf_RB, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
+        // Fmatrix = refForceCalc4(Pf_LF, Pf_RF, Pf_LB, Pf_RB, Q_LF, Q_RF, Q_LB, Q_RB, dt);
         // Fmatrix = refForceCalcQP(torsoRot, Q_LF, Q_RF, Q_LB, Q_RB, Pcom, ddXcom, ddYcom, dt);
-        F1cont << 0*Fmatrix(0, 0), 0*Fmatrix(0, 1), Fmatrix(0, 2);
-        F2cont << 0*Fmatrix(1, 0), 0*Fmatrix(1, 1), Fmatrix(1, 2);
-        F3cont << 0*Fmatrix(2, 0), 0*Fmatrix(2, 1), Fmatrix(2, 2);
-        F4cont << 0*Fmatrix(3, 0), 0*Fmatrix(3, 1), Fmatrix(3, 2);
+        F1cont << Fmatrix(0, 0), Fmatrix(0, 1), Fmatrix(0, 2);
+        F2cont << Fmatrix(1, 0), Fmatrix(1, 1), Fmatrix(1, 2);
+        F3cont << Fmatrix(2, 0), Fmatrix(2, 1), Fmatrix(2, 2);
+        F4cont << Fmatrix(3, 0), Fmatrix(3, 1), Fmatrix(3, 2);
         
         /* INVERSE DYNAMICS */
         rootOrientation = quat2Rotmat(genCoordinates(3), genCoordinates(4), genCoordinates(5), genCoordinates(6));

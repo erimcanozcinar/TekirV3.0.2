@@ -10,14 +10,16 @@
 
 double PI = 3.14159265359;
 double GRAVITY = 9.81;
-double MASS = 36.100; 
+double MASS = 36.100;
+Eigen::Matrix3d Itorso;  
 
 /* Vectors, matricesand variable declaration */
 double t = 0.0, dt = 0.0;
 
 Eigen::VectorXd initialConditions(19), genCoordinates(19);
 Eigen::VectorXd F(18), genVelocity(18), genAcceleration(18), genAccelerationVec(18), prevgenVelocity(18);
-Eigen::Vector3d Pf_LF, Pf_RF, Pf_LB, Pf_RB, Pcom, torsoRot, imuRot, prev_imuRot, dimuRot;
+Eigen::Vector3d Pf_LF, Pf_RF, Pf_LB, Pf_RB, Pcom, torsoRot, dtorsoRot, prev_torsoRot, ddtorsoRot, prev_dtorsoRot, imuRot, prev_imuRot, dimuRot;
+Eigen::Vector3d Rf_LF, Rf_RF, Rf_LB, Rf_RB;
 Eigen::Vector3d Q_LF, Q_RF, Q_LB, Q_RB, prevQ_LF, prevQ_RF, prevQ_LB, prevQ_RB, dQ_LF, dQ_RF, dQ_LB, dQ_RB;
 Eigen::Vector3d Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fcon, q_LF, q_RF, q_LB, q_RB, dq_LF, dq_RF, dq_LB, dq_RB;
 Eigen::Vector3d Pcon_LF, Pcon_RF, Pcon_LB, Pcon_RB;
@@ -30,9 +32,11 @@ double Xi, Yi, m_L, m_R, b_L, b_R;
 Eigen::Matrix <double, 3, 3> Rtorso;
 Eigen::Matrix <double, 4, 3> Fmatrix;
 Eigen::Vector3d Rc_h1, Rc_h2, Rc_h3, Rc_h4, F1cont, F2cont, F3cont, F4cont, Tau1_vmc, Tau2_vmc, Tau3_vmc, Tau4_vmc, Rcom;
-Eigen::Vector3d Pbase, dPbase, des_Pbase, des_dPbase, prev_Pbase, dtorsoRot;
+Eigen::Vector3d Pbase, dPbase, des_Pbase, des_dPbase, prev_Pbase;
 double Zcom_act = 0, prevZcom_act = 0, dZcom_act = 0;
-double Fxmb, Fymb, Fzmb, Mxmb, Mymb, Mzmb;
+Eigen::VectorXd Fvmc(6), Mvmc(3);
+Eigen::Vector4d quat_ref;
+Eigen::VectorXd orientControlRef(10);
 
 /* Push Recovery parameters */
 int capEnabled = 0;

@@ -112,6 +112,67 @@ double HPF(double In, double prevIn, double prevOut, double g, double dt)
     return Out;
 }
 
+Eigen::VectorXd QuaternionRef(double Roll, double Pitch, double Yaw, double dRoll, double dPitch, double dYaw, double ddRoll, double ddPitch, double ddYaw) 
+{   
+    Eigen::VectorXd out(10);
+    Eigen::Matrix3d R;
+    double Wx = -dPitch*sin(Yaw)+dRoll*cos(Pitch)*cos(Yaw);
+    double Wy = dPitch*cos(Yaw)+dRoll*cos(Pitch)*sin(Yaw);
+    double Wz = dYaw-dRoll*sin(Pitch);
+
+    double dWx = -dYaw*(dPitch*cos(Yaw)+dRoll*cos(Pitch)*sin(Yaw))-ddPitch*sin(Yaw)+ddRoll*cos(Pitch)*cos(Yaw)-dRoll*dPitch*cos(Yaw)*sin(Pitch);
+    double dWy = -dYaw*(dPitch*sin(Yaw)-dRoll*cos(Pitch)*cos(Yaw))+ddPitch*cos(Yaw)+ddRoll*cos(Pitch)*sin(Yaw)-dRoll*dPitch*sin(Pitch)*sin(Yaw);
+    double dWz = ddYaw-ddRoll*sin(Pitch)-dRoll*dPitch*cos(Pitch);
+
+    /* Rotation Matrix to Quaternion */
+    R(0,0) = cos(Pitch)*cos(Yaw);
+    R(0,1) = -cos(Roll)*sin(Yaw)+cos(Yaw)*sin(Roll)*sin(Pitch);
+    R(0,2) = sin(Roll)*sin(Yaw)+cos(Roll)*cos(Yaw)*sin(Pitch);
+    R(1,0) = cos(Pitch)*sin(Yaw);
+    R(1,1) = cos(Roll)*cos(Yaw)+sin(Roll)*sin(Pitch)*sin(Yaw);
+    R(1,2) = -cos(Yaw)*sin(Roll)+cos(Roll)*sin(Pitch)*sin(Yaw);
+    R(2,0) = -sin(Pitch);
+    R(2,1) = cos(Pitch)*sin(Roll);
+    R(2,2) = cos(Roll)*cos(Pitch);
+    double qw = 0.5 * sqrt(1 + R(0,0) + R(1,1) + R(2,2));
+    double qx = (R(2,1) - R(1,2)) / (4 * qw);
+    double qy = (R(0,2) - R(2,0)) / (4 * qw);
+    double qz = (R(1,0) - R(0,1)) / (4 * qw);
+
+    out << qw,qx,qy,qz,Wx,Wy,Wz,dWx,dWy,dWz;
+    return out;
+}
+
+Eigen::Matrix3d vec2SkewSym(Eigen::Vector3d V)
+{
+    Eigen::Matrix3d M;
+    M << 0, -V(2), V(1),
+         V(2), 0, -V(0),
+         -V(1), V(0), 0;
+    return M;
+}
+
+Eigen::Vector4d eulerToQuaternion(double yaw, double pitch, double roll) {
+    double w, x, y, z;
+    Eigen::Vector4d quat;
+
+    double cy = std::cos(yaw * 0.5);
+    double sy = std::sin(yaw * 0.5);
+    double cp = std::cos(pitch * 0.5);
+    double sp = std::sin(pitch * 0.5);
+    double cr = std::cos(roll * 0.5);
+    double sr = std::sin(roll * 0.5);
+
+    w = cy * cp * cr + sy * sp * sr;
+    x = cy * cp * sr - sy * sp * cr;
+    y = cy * sp * cr + sy * cp * sr;
+    z = sy * cp * cr - cy * sp * sr;
+
+    quat << w, x, y, z;
+
+    return quat;
+}
+
 Eigen::Matrix3d RotateRoll(double a)
 {
     double RotX[3][3];
@@ -591,6 +652,46 @@ Eigen::Matrix<double, 4, 3> refForceCalc4(const Eigen::Vector3d& Rcf1, const Eig
     return Out;
 }
 
+Eigen::Matrix<double, 4, 3> VMC(const Eigen::Vector3d& Rcf1, const Eigen::Vector3d& Rcf2, const Eigen::Vector3d& Rcf3, const Eigen::Vector3d& Rcf4, const Eigen::Vector3d& Fc_LF, const Eigen::Vector3d& Fc_RF, const Eigen::Vector3d& Fc_LB, const Eigen::Vector3d& Fc_RB, Eigen::VectorXd C, double dt)
+{
+    double F1x, F2x, F3x, F4x;
+    double F1y, F2y, F3y, F4y;
+    double F1z, F2z, F3z, F4z;
+    Eigen::Matrix<double, 4, 3> Out;
+
+    int contactState_L, contactState_R, contactState_LB, contactState_RB;
+
+    // Foot position wrt CoM
+    double r1xc = Rcf1(0); double r1yc = Rcf1(1); double r1zc = Rcf1(2); // LF
+    double r2xc = Rcf2(0); double r2yc = Rcf2(1); double r2zc = Rcf2(2); // RF
+    double r3xc = Rcf3(0); double r3yc = Rcf3(1); double r3zc = Rcf3(2); // LB
+    double r4xc = Rcf4(0); double r4yc = Rcf4(1); double r4zc = Rcf4(2); // RB
+
+    
+    Eigen::Matrix <double, 6, 12> P;
+    Eigen::VectorXd F(12);
+    F.setZero();
+
+    if(Fc_LF(2) > 0 || Fc_RB(2) > 0) { contactState_L = 1; }
+    else { contactState_L = 0; }
+    if(Fc_RF(2) > 0 || Fc_LB(2) > 0) { contactState_R = 1; }
+    else { contactState_R = 0; }
+
+    P << Eigen::MatrixXd::Identity(3,3)*contactState_L, Eigen::MatrixXd::Identity(3,3)*contactState_R, Eigen::MatrixXd::Identity(3,3)*contactState_R, Eigen::MatrixXd::Identity(3,3)*contactState_L,
+         vec2SkewSym(Rcf1)*contactState_L, vec2SkewSym(Rcf2)*contactState_R, vec2SkewSym(Rcf3)*contactState_R, vec2SkewSym(Rcf4)*contactState_L;
+    F = P.completeOrthogonalDecomposition().solve(C);
+    
+    F1x = F(0); F2x = F(3); F3x = F(6); F4x = F(9);
+    F1y = F(1); F2y = F(4); F3y = F(7); F4y = F(10);
+    F1z = F(2); F2z = F(5); F3z = F(8); F4z = F(11);
+
+    Out << F1x, F1y, F1z,
+        F2x, F2y, F2z,
+        F3x, F3y, F3z,
+        F4x, F4y, F4z;
+    return Out;
+}
+
 double SolveQuadCosSin(double ann, double bnn, double cnn, int mu)
 {
     // ann = bnn * cos(x) + cnn * sin(x)
@@ -607,6 +708,77 @@ double SolveQuadCosSin(double ann, double bnn, double cnn, int mu)
     // hnn = ann ^ 2 - cnn ^ 2;
     //
     // Out = atan2(((cnn * bnn + mu * ann * sqrt(bnn ^ 2 - hnn))), hnn);
+}
+
+Eigen::Vector3d fullBodyFK(Eigen::Vector3d torsoOrient, Eigen::Vector3d Rcom, Eigen::Vector3d Q, int u)
+{
+    int m, n, f;
+    double L, W, H;
+
+    double R = torsoOrient(0);
+    double P = torsoOrient(1);
+    double Y = torsoOrient(2);
+
+    double Xc = Rcom(0);
+    double Yc = Rcom(1);
+    double Zc = Rcom(2);
+    
+    double q0 = Q(0);
+    double q1 = Q(1);
+    double q2 = Q(2);
+    double q3 = 30*PI/180;
+
+    Eigen::Vector3d P7;
+
+    switch (u)
+    {
+    case 1:
+        m = 1;
+        n = 1;
+        f = 1;
+        L = 0.3102;
+        W = 0.105;
+        H = 0.002;
+        break;
+    case 2:
+        m = 1;
+        n = -1;
+        f = 1;
+        L = 0.3102;
+        W = -0.105;
+        H = 0.002;
+        break;
+    case 3:
+        m = -1;
+        n = 1;
+        f = -1;
+        L = -0.3102;
+        W = 0.105;
+        H = 0.002;
+        break;
+    case 4:
+        m = -1;
+        n = -1;
+        f = -1;
+        L = -0.3102;
+        W = -0.105;
+        H = 0.002;
+        break;
+    }
+
+    // Link Lengths
+    double d0 = m * 0.079;
+    double d1 = n * 0.0262;
+    double d2 = n * 0.1102;
+    double d3 = -0.27;
+    double d4 = -0.224282;
+    double d5 = -0.107131; //-0.107131;
+
+    P7[0] = Xc+d3*(cos(q1)*(sin(P)*cos(q0)+cos(P)*sin(Y)*sin(q0))+cos(P)*cos(Y)*sin(q1))+d5*(cos(f*q3)*(cos(q2)*(cos(q1)*(sin(P)*cos(q0)+cos(P)*sin(Y)*sin(q0))+cos(P)*cos(Y)*sin(q1))-sin(q2)*(sin(q1)*(sin(P)*cos(q0)+cos(P)*sin(Y)*sin(q0))-cos(P)*cos(Y)*cos(q1)))-sin(f*q3)*(cos(q2)*(sin(q1)*(sin(P)*cos(q0)+cos(P)*sin(Y)*sin(q0))-cos(P)*cos(Y)*cos(q1))+sin(q2)*(cos(q1)*(sin(P)*cos(q0)+cos(P)*sin(Y)*sin(q0))+cos(P)*cos(Y)*sin(q1))))+d4*(cos(q2)*(cos(q1)*(sin(P)*cos(q0)+cos(P)*sin(Y)*sin(q0))+cos(P)*cos(Y)*sin(q1))-sin(q2)*(sin(q1)*(sin(P)*cos(q0)+cos(P)*sin(Y)*sin(q0))-cos(P)*cos(Y)*cos(q1)))+H*sin(P)+d1*(sin(P)*sin(q0)-cos(P)*sin(Y)*cos(q0))+d2*(sin(P)*sin(q0)-cos(P)*sin(Y)*cos(q0))+L*cos(P)*cos(Y)+d0*cos(P)*cos(Y)-W*cos(P)*sin(Y);
+    P7[1] = Yc+d4*(cos(q2)*(sin(q1)*(cos(R)*sin(Y)+cos(Y)*sin(P)*sin(R))-cos(q1)*(sin(q0)*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))+cos(P)*sin(R)*cos(q0)))+sin(q2)*(cos(q1)*(cos(R)*sin(Y)+cos(Y)*sin(P)*sin(R))+sin(q1)*(sin(q0)*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))+cos(P)*sin(R)*cos(q0))))+L*(cos(R)*sin(Y)+cos(Y)*sin(P)*sin(R))+d5*(cos(f*q3)*(cos(q2)*(sin(q1)*(cos(R)*sin(Y)+cos(Y)*sin(P)*sin(R))-cos(q1)*(sin(q0)*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))+cos(P)*sin(R)*cos(q0)))+sin(q2)*(cos(q1)*(cos(R)*sin(Y)+cos(Y)*sin(P)*sin(R))+sin(q1)*(sin(q0)*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))+cos(P)*sin(R)*cos(q0))))+sin(f*q3)*(cos(q2)*(cos(q1)*(cos(R)*sin(Y)+cos(Y)*sin(P)*sin(R))+sin(q1)*(sin(q0)*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))+cos(P)*sin(R)*cos(q0)))-sin(q2)*(sin(q1)*(cos(R)*sin(Y)+cos(Y)*sin(P)*sin(R))-cos(q1)*(sin(q0)*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))+cos(P)*sin(R)*cos(q0)))))+W*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))+d0*(cos(R)*sin(Y)+cos(Y)*sin(P)*sin(R))+d3*(sin(q1)*(cos(R)*sin(Y)+cos(Y)*sin(P)*sin(R))-cos(q1)*(sin(q0)*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))+cos(P)*sin(R)*cos(q0)))+d1*(cos(q0)*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))-cos(P)*sin(R)*sin(q0))+d2*(cos(q0)*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))-cos(P)*sin(R)*sin(q0))-H*cos(P)*sin(R);
+    P7[2] = Zc+d5*(cos(f*q3)*(cos(q2)*(sin(q1)*(sin(R)*sin(Y)-cos(R)*cos(Y)*sin(P))-cos(q1)*(sin(q0)*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))-cos(P)*cos(R)*cos(q0)))+sin(q2)*(cos(q1)*(sin(R)*sin(Y)-cos(R)*cos(Y)*sin(P))+sin(q1)*(sin(q0)*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))-cos(P)*cos(R)*cos(q0))))+sin(f*q3)*(cos(q2)*(cos(q1)*(sin(R)*sin(Y)-cos(R)*cos(Y)*sin(P))+sin(q1)*(sin(q0)*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))-cos(P)*cos(R)*cos(q0)))-sin(q2)*(sin(q1)*(sin(R)*sin(Y)-cos(R)*cos(Y)*sin(P))-cos(q1)*(sin(q0)*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))-cos(P)*cos(R)*cos(q0)))))+d4*(cos(q2)*(sin(q1)*(sin(R)*sin(Y)-cos(R)*cos(Y)*sin(P))-cos(q1)*(sin(q0)*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))-cos(P)*cos(R)*cos(q0)))+sin(q2)*(cos(q1)*(sin(R)*sin(Y)-cos(R)*cos(Y)*sin(P))+sin(q1)*(sin(q0)*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))-cos(P)*cos(R)*cos(q0))))+L*(sin(R)*sin(Y)-cos(R)*cos(Y)*sin(P))+W*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))+d3*(sin(q1)*(sin(R)*sin(Y)-cos(R)*cos(Y)*sin(P))-cos(q1)*(sin(q0)*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))-cos(P)*cos(R)*cos(q0)))+d0*(sin(R)*sin(Y)-cos(R)*cos(Y)*sin(P))+d1*(cos(q0)*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))+cos(P)*cos(R)*sin(q0))+d2*(cos(q0)*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))+cos(P)*cos(R)*sin(q0))+H*cos(P)*cos(R);
+
+    return P7;
 }
 
 Eigen::Vector3d fullBodyIKan(Eigen::Vector3d Rfoot, Eigen::Vector3d Rcom, Eigen::Vector3d torsoOrient, int u)
