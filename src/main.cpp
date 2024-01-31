@@ -151,7 +151,19 @@ int main(int argc, char** argv) {
         dq_LF << genVelocity(6), genVelocity(7), genVelocity(8);
         dq_RF << genVelocity(9), genVelocity(10), genVelocity(11);
         dq_LB << genVelocity(12), genVelocity(13), genVelocity(14);
-        dq_RB << genVelocity(15), genVelocity(16), genVelocity(17);     
+        dq_RB << genVelocity(15), genVelocity(16), genVelocity(17);
+
+        rootOrientation = quat2Rotmat(genCoordinates(3), genCoordinates(4), genCoordinates(5), genCoordinates(6));
+        rootAngvelocity << genVelocity(3), genVelocity(4), genVelocity(5);
+        rootAngacceleration << genAcceleration(3), genAcceleration(4), genAcceleration(5);
+
+        rootAbsposition << genCoordinates(0), genCoordinates(1), genCoordinates(2);
+        rootAbsvelocity << genVelocity(0), genVelocity(1), genVelocity(2);
+        rootAbsacceleration << genAcceleration(0), genAcceleration(1), genAcceleration(2);
+
+        jPositions << q_LF(0), q_LF(1), q_LF(2), q_RF(0), q_RF(1), q_RF(2), q_LB(0), q_LB(1), q_LB(2), q_RB(0), q_RB(1), q_RB(2);
+        jVelocities << dq_LF(0), dq_LF(1), dq_LF(2), dq_RF(0), dq_RF(1), dq_RF(2), dq_LB(0), dq_LB(1), dq_LB(2), dq_RB(0), dq_RB(1), dq_RB(2);
+        jAccelerations << ddQ_LF(0), ddQ_LF(1), ddQ_LF(2), ddQ_RF(0), ddQ_RF(1), ddQ_RF(2), ddQ_LB(0), ddQ_LB(1), ddQ_LB(2), ddQ_RB(0), ddQ_RB(1), ddQ_RB(2);    
         
         /* ORIENTATION CONTROL */
         // Zpitch_front = Kp_pitch*(0 - imuRot(1)) + Kd_pitch*(0 - dimuRot(1));
@@ -249,26 +261,12 @@ int main(int argc, char** argv) {
 
         Fvmc << MASS*(ddXcom + (ddXcom-genAcceleration(0))*0.1), MASS*(ddYcom + (ddYcom-genAcceleration(1))*0.1), MASS*(GRAVITY + (ddZcom-genAcceleration(2))*0.1), Mvmc(0), Mvmc(1), Mvmc(2);
         Fmatrix = VMC(Rf_LF, Rf_RF, Rf_LB, Rf_RB, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
-        // Fmatrix = refForceCalc4(Pf_LF, Pf_RF, Pf_LB, Pf_RB, Q_LF, Q_RF, Q_LB, Q_RB, dt);
-        // Fmatrix = refForceCalcQP(torsoRot, Q_LF, Q_RF, Q_LB, Q_RB, Pcom, ddXcom, ddYcom, dt);
         F1cont << Fmatrix(0, 0), Fmatrix(0, 1), Fmatrix(0, 2);
         F2cont << Fmatrix(1, 0), Fmatrix(1, 1), Fmatrix(1, 2);
         F3cont << Fmatrix(2, 0), Fmatrix(2, 1), Fmatrix(2, 2);
         F4cont << Fmatrix(3, 0), Fmatrix(3, 1), Fmatrix(3, 2);
         
         /* INVERSE DYNAMICS */
-        rootOrientation = quat2Rotmat(genCoordinates(3), genCoordinates(4), genCoordinates(5), genCoordinates(6));
-        rootAngvelocity << genVelocity(3), genVelocity(4), genVelocity(5);
-        rootAngacceleration << genAcceleration(3), genAcceleration(4), genAcceleration(5);
-
-        rootAbsposition << genCoordinates(0), genCoordinates(1), genCoordinates(2);
-        rootAbsvelocity << genVelocity(0), genVelocity(1), genVelocity(2);
-        rootAbsacceleration << genAcceleration(0), genAcceleration(1), genAcceleration(2);
-
-        jPositions << q_LF(0), q_LF(1), q_LF(2), q_RF(0), q_RF(1), q_RF(2), q_LB(0), q_LB(1), q_LB(2), q_RB(0), q_RB(1), q_RB(2);
-        jVelocities << dq_LF(0), dq_LF(1), dq_LF(2), dq_RF(0), dq_RF(1), dq_RF(2), dq_LB(0), dq_LB(1), dq_LB(2), dq_RB(0), dq_RB(1), dq_RB(2);
-        jAccelerations << ddQ_LF(0), ddQ_LF(1), ddQ_LF(2), ddQ_RF(0), ddQ_RF(1), ddQ_RF(2), ddQ_LB(0), ddQ_LB(1), ddQ_LB(2), ddQ_RB(0), ddQ_RB(1), ddQ_RB(2);
-
         jffTorques = funNewtonEuler4Leg(rootAbsacceleration, rootOrientation, rootAngvelocity, rootAngacceleration, jPositions, jVelocities, jAccelerations, F1cont, F2cont, F3cont, F4cont);
         jffTorques2 = funNewtonEuler4Leg(rootAbsacceleration, rootOrientation, rootAngvelocity*0, rootAngacceleration, jPositions, jVelocities*0, jAccelerations, F1cont*0, F2cont*0, F3cont*0, F4cont*0);
 
