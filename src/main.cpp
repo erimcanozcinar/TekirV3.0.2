@@ -6,7 +6,6 @@ int main(int argc, char** argv) {
     auto binaryPath = raisim::Path::setFromArgv(argv[0]);
     raisim::World::setActivationKey(binaryPath.getDirectory() + "\\activation.raisim");
     raisim::World world;
-    // timeBeginPeriod(1); // for sleep_for function. windows default clock speed is 1/64 second. This sets it to 1ms.
 
     world.setTimeStep(0.001);
     world.setMaterialPairProp("steel", "steel", 0.95, 0.95, 0.001, 0.95, 0.001);
@@ -20,8 +19,6 @@ int main(int argc, char** argv) {
     quadruped->getCollisionBody("Foot_rf/0").setMaterial("rubber");
     quadruped->getCollisionBody("Foot_lb/0").setMaterial("rubber");
     quadruped->getCollisionBody("Foot_rb/0").setMaterial("rubber");
-
-    quadruped->setGeneralizedCoordinate(initialConditions);
 
     /* Create Log file */
     FILE* fp0;
@@ -78,9 +75,8 @@ int main(int argc, char** argv) {
     /* Launch raisim server for visualization.Can be visualized on raisimUnity */
     raisim::RaisimServer server(&world);
     server.setMap("default");
-    server.focusOn(quadruped);
+    // server.focusOn(quadruped);
     server.launchServer();
-
 
     while (!quit) {
         RS_TIMED_LOOP(int(world.getTimeStep()*1e6));
