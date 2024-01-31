@@ -251,16 +251,15 @@ void dualShockController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_EVENT ev, dou
                 //     std::cout << "R1: " << ev.joystick.button << std::endl;
                 //     break;
                 case 6: /* L2 Button */
-                    std::cout << "L2: " << ev.joystick.button << std::endl;
+                    // std::cout << "L2: " << ev.joystick.button << std::endl;
                     break;
                 case 7: /* R2 Button */
-                    std::cout << "R2: " << ev.joystick.button << std::endl;
+                    // std::cout << "R2: " << ev.joystick.button << std::endl;
                     break;
                 case 8: /* Back Button */
                     // std::cout << "Share: " << ev.joystick.button << std::endl;
                     close = true;
                     al_release_joystick(joyStick);
-
                     break;
                 case 9: /* Options */
                     if(walkEnable){ 
