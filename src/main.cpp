@@ -1,5 +1,4 @@
 #include "main.hpp"
-#include "trajectory.cpp"
 
 int main(int argc, char** argv) {    
     /* Raisim */
@@ -46,8 +45,6 @@ int main(int argc, char** argv) {
     accBody.setZero(); velBody.setZero();
     jPositions.setZero(); jVelocities.setZero(); jAccelerations.setZero(); jffTorques.setZero();
 
-    // Kp << 700, 200, 200;
-    // Kd << 70, 20, 20;
     Kp << 120, 70, 70;
     Kd << 12, 7, 7;
 
@@ -70,7 +67,6 @@ int main(int argc, char** argv) {
     Q_RB = fullBodyIKan(Pf_RB, Pcom, torsoRot, 4);
     initialConditions << ComX, ComY, ComZ, quat_w, quat_x, quat_y, quat_z, Q_LF(0), Q_LF(1), Q_LF(2), Q_RF(0), Q_RF(1), Q_RF(2), Q_LB(0), Q_LB(1), Q_LB(2), Q_RB(0), Q_RB(1), Q_RB(2);
     quadruped->setGeneralizedCoordinate(initialConditions);
-
 
     /* Launch raisim server for visualization.Can be visualized on raisimUnity */
     raisim::RaisimServer server(&world);

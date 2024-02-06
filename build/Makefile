@@ -129,6 +129,30 @@ tekirV3/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/tekirV3.dir/build.make CMakeFiles/tekirV3.dir/build
 .PHONY : tekirV3/fast
 
+src/functions.o: src/functions.cpp.o
+.PHONY : src/functions.o
+
+# target to build an object file
+src/functions.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tekirV3.dir/build.make CMakeFiles/tekirV3.dir/src/functions.cpp.o
+.PHONY : src/functions.cpp.o
+
+src/functions.i: src/functions.cpp.i
+.PHONY : src/functions.i
+
+# target to preprocess a source file
+src/functions.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tekirV3.dir/build.make CMakeFiles/tekirV3.dir/src/functions.cpp.i
+.PHONY : src/functions.cpp.i
+
+src/functions.s: src/functions.cpp.s
+.PHONY : src/functions.s
+
+# target to generate assembly for a file
+src/functions.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tekirV3.dir/build.make CMakeFiles/tekirV3.dir/src/functions.cpp.s
+.PHONY : src/functions.cpp.s
+
 src/main.o: src/main.cpp.o
 .PHONY : src/main.o
 
@@ -153,6 +177,30 @@ src/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/tekirV3.dir/build.make CMakeFiles/tekirV3.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
+src/trajectory.o: src/trajectory.cpp.o
+.PHONY : src/trajectory.o
+
+# target to build an object file
+src/trajectory.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tekirV3.dir/build.make CMakeFiles/tekirV3.dir/src/trajectory.cpp.o
+.PHONY : src/trajectory.cpp.o
+
+src/trajectory.i: src/trajectory.cpp.i
+.PHONY : src/trajectory.i
+
+# target to preprocess a source file
+src/trajectory.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tekirV3.dir/build.make CMakeFiles/tekirV3.dir/src/trajectory.cpp.i
+.PHONY : src/trajectory.cpp.i
+
+src/trajectory.s: src/trajectory.cpp.s
+.PHONY : src/trajectory.s
+
+# target to generate assembly for a file
+src/trajectory.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/tekirV3.dir/build.make CMakeFiles/tekirV3.dir/src/trajectory.cpp.s
+.PHONY : src/trajectory.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -162,9 +210,15 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... tekirV3"
+	@echo "... src/functions.o"
+	@echo "... src/functions.i"
+	@echo "... src/functions.s"
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
+	@echo "... src/trajectory.o"
+	@echo "... src/trajectory.i"
+	@echo "... src/trajectory.s"
 .PHONY : help
 
 

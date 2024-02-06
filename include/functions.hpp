@@ -1,8 +1,15 @@
+#ifndef FUNCTIONS_HPP
+#define FUNCTIONS_HPP
+
 #include "Eigen/Dense"
 #include <stdio.h>
 #include <iostream>
 #include <vector>
 #include <cstdlib>
+
+#define PI 3.14159265359
+#define GRAVITY 9.81
+#define MASS 36.100
 
 bool AreDoubleSame(double dFirstVal, double dSecondVal);
 double mapVal(double inVal, double inMax, double inMin, double outMax, double outMin);
@@ -40,3 +47,5 @@ Eigen::Vector3d fullBodyIKan(Eigen::Vector3d Rfoot, Eigen::Vector3d Rcom, Eigen:
 Eigen::Matrix3d quat2Rotmat(double qw, double qx, double qy, double qz);
 Eigen::Vector3d funcNewtonEuler(Eigen::Vector3d rootAbsAcc, Eigen::Matrix3d rootOrient, Eigen::Vector3d rootAngVel, Eigen::Vector3d rootAngAcc, Eigen::Vector3d jPos, Eigen::Vector3d jVel, Eigen::Vector3d jAcc, Eigen::Vector3d grForce, Eigen::Vector3d Rcon, int legIndex);
 Eigen::Matrix<double, 12, 1> funNewtonEuler4Leg(Eigen::Vector3d rootAbsAcc, Eigen::Matrix3d rootOrient, Eigen::Vector3d rootAngVel, Eigen::Vector3d rootAngAcc, Eigen::VectorXd jPos, Eigen::VectorXd jVel, Eigen::VectorXd jAcc, Eigen::Vector3d grForce_LF, Eigen::Vector3d grForce_RF, Eigen::Vector3d grForce_LB, Eigen::Vector3d grForce_RB);
+
+#endif

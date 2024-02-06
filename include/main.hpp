@@ -1,3 +1,6 @@
+#ifndef MAIN_HPP
+#define MAIN_HPP
+
 #include "raisim/World.hpp"
 #include "raisim/RaisimServer.hpp"
 #include <stdio.h>
@@ -7,10 +10,8 @@
 #include "Eigen/Dense"
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_native_dialog.h>
+#include "trajectory.hpp"
 
-double PI = 3.14159265359;
-double GRAVITY = 9.81;
-double MASS = 36.100;
 Eigen::Matrix3d Itorso;  
 
 /* Vectors, matricesand variable declaration */
@@ -99,3 +100,5 @@ double Zroll_LF, Zroll_RF, Zroll_LB, Zroll_RB;
 double Zpitch_LF, Zpitch_RF, Zpitch_LB, Zpitch_RB;
 double Kp_roll = 1.0, Kd_roll = 0.0;
 double Kp_pitch = 1.0, Kd_pitch = 0.0;
+
+#endif

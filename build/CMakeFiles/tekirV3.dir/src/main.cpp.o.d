@@ -636,7 +636,5 @@ CMakeFiles/tekirV3.dir/src/main.cpp.o: \
  /usr/local/include/allegro5/alcompat.h \
  /usr/local/include/allegro5/platform/alunix.h \
  /usr/local/include/allegro5/allegro_native_dialog.h \
- /home/erim/RaiSim_Simulations/TekirV3.0.1/src/trajectory.cpp \
  /home/erim/RaiSim_Simulations/TekirV3.0.1/include/trajectory.hpp \
- /home/erim/RaiSim_Simulations/TekirV3.0.1/src/functions.cpp \
  /home/erim/RaiSim_Simulations/TekirV3.0.1/include/functions.hpp

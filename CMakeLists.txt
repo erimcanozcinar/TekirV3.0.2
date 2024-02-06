@@ -13,7 +13,7 @@ find_package(Eigen3 REQUIRED)
 include_directories (${EIGEN3_INCLUDE_DIRS})
 include_directories (${QP_INCLUDE_DIRS})
 
-add_executable(tekirV3 src/main.cpp)
+add_executable(tekirV3 src/main.cpp src/trajectory.cpp src/functions.cpp)
 
 target_link_libraries(tekirV3 PUBLIC raisim::raisim pthread)
 target_include_directories(tekirV3 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
