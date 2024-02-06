@@ -1,8 +1,8 @@
 #include "main.hpp"
 #include "trajectory.cpp"
 
-int main(int argc, char** argv) {
-    /* Riasim */
+int main(int argc, char** argv) {    
+    /* Raisim */
     auto binaryPath = raisim::Path::setFromArgv(argv[0]);
     raisim::World::setActivationKey(binaryPath.getDirectory() + "\\activation.raisim");
     raisim::World world;
@@ -253,7 +253,7 @@ int main(int argc, char** argv) {
         quatVecRef << orientControlRef(1), orientControlRef(2), orientControlRef(3);
         quatVec << genCoordinates(4), genCoordinates(5), genCoordinates(6);
 
-        Mvmc = Itorso*(dWref + sqrt(50)*(Wref - rootAngvelocity) - 50*(orientControlRef(0)*quatVec - genCoordinates(3)*quatVecRef + vec2SkewSym(quatVecRef)*quatVec));
+        Mvmc = Itorso*(dWref + sqrt(100)*(Wref - rootAngvelocity) - 100*(orientControlRef(0)*quatVec - genCoordinates(3)*quatVecRef + vec2SkewSym(quatVecRef)*quatVec));
 
         Fvmc << MASS*(ddXcom + (ddXcom-genAcceleration(0))*0.1), MASS*(ddYcom + (ddYcom-genAcceleration(1))*0.1), MASS*(GRAVITY + (ddZcom-genAcceleration(2))*0.1), Mvmc(0), Mvmc(1), Mvmc(2);
         Fmatrix = VMC(Rf_LF, Rf_RF, Rf_LB, Rf_RB, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);

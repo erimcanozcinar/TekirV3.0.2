@@ -222,7 +222,7 @@ void dualShockController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_EVENT ev, dou
                             break;
                         case 1: /* D-pad U/D */
                             Kv = Kv - 0.1*ev.joystick.pos;
-                            if(Kv >= 0.6) { Kv = 0.6;}
+                            if(Kv >= 1.0) { Kv = 1.0;}
                             else if(Kv <= 0.1) { Kv = 0.1; }
                             if(abs(ev.joystick.pos)) { std::cout << "Max. Vel. set to: " << Kv << std::endl; }                                              
                             break;

@@ -10,9 +10,9 @@
                 "/home/erim/RaiSim_Simulations/TekirV3.0.1/include"
             ],
             "defines": [],
-            "compilerPath": "/usr/bin/gcc",
-            "cStandard": "c17",
-            "cppStandard": "gnu++17",
+            "compilerPath": "/usr/bin/g++",
+            "cStandard": "c23",
+            "cppStandard": "gnu++23",
             "intelliSenseMode": "linux-gcc-x64"
         }
     ],
