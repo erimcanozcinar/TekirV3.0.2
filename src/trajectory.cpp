@@ -178,7 +178,7 @@ void dualShockController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_EVENT ev, dou
     double decreaseHeight = 0.0, increaseHeight = 0.0;;
     double roll = 0.0, pitch = 0.0, yaw = 0.0;
 
-    al_wait_for_event_timed(event_queue, &ev,0.0001);
+    al_wait_for_event_timed(event_queue, &ev, 0.0001);
     switch (ev.type) {
         case ALLEGRO_EVENT_JOYSTICK_CONFIGURATION:
             al_reconfigure_joysticks();

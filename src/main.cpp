@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
     auto ground = world.addGround(0, "steel");
     // ground->setAppearance("hidden");
 
-    auto quadruped = world.addArticulatedSystem("/home/erim/RaiSim_Simulations/TekirV3/rsc/urdf/tekir3mesh_new.urdf");
+    auto quadruped = world.addArticulatedSystem("/home/erim/RaiSim_Simulations/TekirV3.0.1/rsc/urdf/tekir3mesh_new.urdf");
     // auto quadruped = world.addArticulatedSystem("/home/erim/raisim_ws/rsc/Tekir/urdf/tekir3.urdf");
     quadruped->getCollisionBody("Foot_lf/0").setMaterial("rubber");
     quadruped->getCollisionBody("Foot_rf/0").setMaterial("rubber");
@@ -71,10 +71,11 @@ int main(int argc, char** argv) {
     /* Launch raisim server for visualization.Can be visualized on raisimUnity */
     raisim::RaisimServer server(&world);
     server.setMap("default");
-    // server.focusOn(quadruped);
+    server.focusOn(quadruped);
     server.launchServer();
 
     while (!quit) {
+        auto start_time = std::chrono::high_resolution_clock::now();
         RS_TIMED_LOOP(int(world.getTimeStep()*1e6));
         t = world.getWorldTime();
         dt = world.getTimeStep();
@@ -249,7 +250,7 @@ int main(int argc, char** argv) {
         quatVecRef << orientControlRef(1), orientControlRef(2), orientControlRef(3);
         quatVec << genCoordinates(4), genCoordinates(5), genCoordinates(6);
 
-        Mvmc = Itorso*(dWref + sqrt(100)*(Wref - rootAngvelocity) - 100*(orientControlRef(0)*quatVec - genCoordinates(3)*quatVecRef + vec2SkewSym(quatVecRef)*quatVec));
+        Mvmc = Itorso*(dWref + sqrt(50)*(Wref - rootAngvelocity) - 50*(orientControlRef(0)*quatVec - genCoordinates(3)*quatVecRef + vec2SkewSym(quatVecRef)*quatVec));
 
         Fvmc << MASS*(ddXcom + (ddXcom-genAcceleration(0))*0.1), MASS*(ddYcom + (ddYcom-genAcceleration(1))*0.1), MASS*(GRAVITY + (ddZcom-genAcceleration(2))*0.1), Mvmc(0), Mvmc(1), Mvmc(2);
         Fmatrix = VMC(Rf_LF, Rf_RF, Rf_LB, Rf_RB, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
@@ -298,12 +299,19 @@ int main(int argc, char** argv) {
         }
         //quadruped->setExternalForce(quadruped->getBodyIdx("torso"), F_ex);
                 
-        server.setCameraPositionAndLookAt({genCoordinates(0)-1.3,genCoordinates(1),genCoordinates(2)+0.6}, {genCoordinates(0),genCoordinates(1),genCoordinates(2)});
+        // server.setCameraPositionAndLookAt({genCoordinates(0)-1.3,genCoordinates(1),genCoordinates(2)+0.6}, {genCoordinates(0),genCoordinates(1),genCoordinates(2)});
                 
-        /* Log data (fp0:NewtonEulerTorques, fp1:PD_torques, fp2: InvDynTorques ) */
-        fprintf(fp0, "%f %f %f %f %f %f %f %f\n", t, Xcom, Ycom, dXcom, dYcom, t, cmdJoy[5], cmdJoyF[5]);
+        
                  
-        server.integrateWorldThreadSafe();
+        server.integrateWorldThreadSafe(); 
+
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto elapsed_time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+        // std::cout << ddYcom << " microseconds" << std::endl;  
+
+        /* Log data (fp0:NewtonEulerTorques, fp1:PD_torques, fp2: InvDynTorques ) */
+        fprintf(fp0, "%f %f %f %f %f %d %f %f\n", t, Xcom, Ycom, dXcom, dYcom, int(elapsed_time.count()), cmdJoy[5], cmdJoyF[5]);
+
     }
     server.killServer();
     fclose(fp0);
