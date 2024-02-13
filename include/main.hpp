@@ -62,21 +62,13 @@ Eigen::VectorXd JF(18), jointTorques(18);
 Eigen::Vector3d Kp, Kd;
 
 /* Controller (Joystick) variables */
-bool quit = false;
-double cmdJoy[22] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.53319176863337994221048177223565, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 double cmdJoyF[22] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.53319176863337994221048177223565, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 double pre_cmdJoyF[22] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.53319176863337994221048177223565, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-bool walkEnable = false;
 double cmd_Vx = 0.0, cmd_Vy = 0.0;
 double cmd_yaw = 0.0, cmd_pitch = 0.0, cmd_roll = 0.0;
 
 /* Trajectory Output variables */
-Eigen::VectorXd trajOut(13);
-double Xcom = 0.0, Ycom = 0.0, Zcom = 0.0;
-double dXcom = 0.0, dYcom = 0.0, dZcom = 0.0;
-double ddXcom = 0.0, ddYcom = 0.0, ddZcom = 0.0;
-double Px_Rfoot = 0.0, Py_Rfoot = 0.0, Pz_Rfoot = 0.0; 
-double Px_Lfoot = 0.0, Py_Lfoot = 0.0, Pz_Lfoot = 0.0; 
+double ddZcom = 0.0;
 
 /* Initial Conditions */
 // Note: GenCoord => (ComX, ComY, ComZ, W_quaternion, X_quaternion, Y_quaternion, Z_quaternion, Hip_AA_LF, Hip_FE_LF, Knee_FE_LF, Hip_AA_RF, Hip_FE_RF, Knee_FE_RF, Hip_AA_LB, Hip_FE_LB, Knee_FE_LB, Hip_AA_RB, Hip_FE_RB, Knee_FE_RB)

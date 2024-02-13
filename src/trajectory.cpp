@@ -2,35 +2,21 @@
 
 /* Trajectory variables */
 Eigen::VectorXd walkTraj(16);
-double Zc = 0.53319176863337994221048177223565;
-double Vx_mean = 0.0;					            // Mean velocity of CoM in X-axis
-double Vy_mean = 0.0;					            // Mean velocity of CoM in X-axis
-int Nphase = 0;						                // Total number of phase(Each Ts + Td is one phase)
-double px = 0.0;                                    // X ZMP
-double py = 0.0;                                    // Y ZMP
-double Ts = 0.28;						            // Single support phase period
-double Td = 0.12;						            // Double support phase period
-double Fc = 0.15;
-double Cx, dCx, ddCx, Xzmp = 0, Yzmp = 0, Kphase;
-double Cy, dCy, ddCy;
+ 
 
-double Xc = 0.0, Yc = 0.0;
-double dXc = 0.0, dYc = 0.0;
-double ddXc = 0.0, ddYc = 0.0; 
+// /* Controller variables */
+// double Kv = 0.1;
+// double prev_vx_mean = 0.0, prev_vy_mean = 0.0;
+// bool walk_enabled = false;
+// bool can_switch = false;
+// bool can_stop = false;
+// double w_start_time = 0.0;
 
-/* Controller variables */
-double Kv = 0.1;
-double prev_vx_mean = 0.0, prev_vy_mean = 0.0;
-bool walk_enabled = false;
-bool can_switch = false;
-bool can_stop = false;
-double w_start_time = 0.0;
-
-double MIN_BODY_HEIGHT = Zc*0.6;
-double MAX_BODY_HEIGHT = 0.58;
+// double MIN_BODY_HEIGHT = Zc*0.6;
+// double MAX_BODY_HEIGHT = 0.58;
 
 /* Functions */
-void xboxController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_EVENT event, ALLEGRO_JOYSTICK* joyStick, double (&joyCmd)[22], bool &walkEnable, bool &close)
+void controller::xboxController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_EVENT event, ALLEGRO_JOYSTICK* joyStick)
 {
     
     /* Gamepad routines */
@@ -48,13 +34,11 @@ void xboxController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_EVENT event, ALLEG
                             Vy_mean = -0.15*event.joystick.pos;
                             Vy_mean = floor(Vy_mean*10000)/10000; /* Truncate to 3 decimal */
                             if(abs(Vy_mean)<0.03) { Vy_mean = 0.0; }
-                            joyCmd[1] = Vy_mean;
                             break;
                         case 1: /* x axis */
                             Vx_mean = -Kv*event.joystick.pos;                                
                             Vx_mean = floor(Vx_mean*10000)/10000; /* Truncate to 3 decimal */
                             if(abs(Vx_mean)<0.03) { Vx_mean = 0.0; }
-                            joyCmd[0] = Vx_mean;
                             break;
                     }
                     break;                    
@@ -167,16 +151,12 @@ void xboxController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_EVENT event, ALLEG
     }
 }
 
-void dualShockController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_EVENT ev, double (&joyCmd)[22], bool &walkEnable, bool &close)
+void controller::dualShockController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_EVENT ev)
 {
     ALLEGRO_JOYSTICK *joyStick = al_get_joystick(0);
     ALLEGRO_JOYSTICK_STATE joyState;
-    if(joyStick) {al_get_joystick_state(joyStick, &joyState);}
-
-    double Vx_mean = 0.0, Vy_mean = 0.0;
-    double cmdZc = Zc; 
-    double decreaseHeight = 0.0, increaseHeight = 0.0;;
-    double roll = 0.0, pitch = 0.0, yaw = 0.0;
+    if(joyStick) {al_get_joystick_state(joyStick, &joyState);}   
+    
 
     al_wait_for_event_timed(event_queue, &ev, 0.0001);
     switch (ev.type) {
@@ -327,7 +307,7 @@ void dualShockController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_EVENT ev, dou
     }
 }
 
-Eigen::VectorXd comTrajectory(double RealTime, double Ts, double Td, int Nphase, double px, double py, double vx_mean, double vy_mean, double Cz, double Fh, double dt)
+void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase, double px, double py, double vx_mean, double vy_mean, double Cz, double Fh, double dt)
 {    
     double t0 = 0.0; // Beginning of the Universe(or Simulation)
     double t1 = t0 + 0; // Put robot on the ground
@@ -339,12 +319,10 @@ Eigen::VectorXd comTrajectory(double RealTime, double Ts, double Td, int Nphase,
     double g = 9.81; // Gravitational acceleration
     double w = sqrt(g / Cz); // Natural freq of equivalent pendulum
 
-    Eigen::Vector3d trajComX, trajComY, trajFootz_L, trajFootz_R, trajFootx_L, trajFootx_R, trajFooty_L, trajFooty_R;
-    Eigen::VectorXd returnVals(16);
-    double Cx, dCx, ddCx, Xcop, Posx_l, Posz_l, Posx_r, Posz_r;
-    double Cy, dCy, ddCy, Ycop, Posy_l, Posy_r;
+    Eigen::Vector3d trajComX, trajComY;
+    Eigen::VectorXd returnVals(16);    
 
-    /* Phase Calculation Start(Each Ts + Td is one phase) */
+    /* #region: Phase Calculation Start(Each Ts + Td is one phase) */
     int k, kx;
     double Rt4Fr = (RealTime - tstart_w) / (Ts + Td);
     if (FuncInterval(RealTime, t0, tstart_w, dt) == true)
@@ -362,9 +340,9 @@ Eigen::VectorXd comTrajectory(double RealTime, double Ts, double Td, int Nphase,
         k = floor(Rt4Fr);
         kx = floor(Rt4Fr / 2);
     }
-    /* Phase Calculation Start(Each Ts + Td is one phase) */
+    /* #endregion: Phase Calculation Start(Each Ts + Td is one phase) */
         
-    // Xcom parameters
+    /* #region: Xcom parameters */
     double Cxd = (px + vx_mean * Ts / 2);
     double Cx0 = (2 * px - Cxd);
     double dCx0 = w * (px - Cx0) * 1 / tanh(w * Ts / 2);
@@ -373,10 +351,11 @@ Eigen::VectorXd comTrajectory(double RealTime, double Ts, double Td, int Nphase,
     double d_dCx0 = dCx0;
 
     double Kx = d_dCx0 + w * (Cxd - px) * 1 / tanh(w * Td / 2);
-    double Strx = 2 * Td * Kx;
+    Strx = 2 * Td * Kx;
     double Cxd0 = Cx0 + Strx / 2;
+    /* #endregion: Xcom parameters */
 
-    // Ycom parameters
+    /* #region: Ycom parameters */
     double Cyd = (py + vy_mean * Ts / 2);
     double Cy0 = (2 * py - Cyd);
     double dCy0 = w * (py - Cy0) * 1 / tanh(w * Ts / 2);
@@ -385,10 +364,11 @@ Eigen::VectorXd comTrajectory(double RealTime, double Ts, double Td, int Nphase,
     double d_dCy0 = dCy0;
 
     double Ky = d_dCy0 + w * (Cyd - py) * 1 / tanh(w * Td / 2);
-    double Stry = 2 * Td * Ky;
+    Stry = 2 * Td * Ky;
     double Cyd0 = Cy0 + Stry / 2;
+    /* #endregion: Ycom parameters */
     
-    /* CoM Trajectory Start */
+    /* #region: CoM Trajectory Start */
     if (FuncInterval(RealTime, t0, t1, dt) == true) // Put robot on the ground
     {
         Cx = 0; dCx = 0; ddCx = 0;
@@ -451,52 +431,37 @@ Eigen::VectorXd comTrajectory(double RealTime, double Ts, double Td, int Nphase,
     {
         Cx = Strx / 2 + (k + 1) * Strx / 2; dCx = 0; ddCx = 0;
         Cy = Stry / 2 + (k + 1) * Stry / 2; dCy = 0; ddCy = 0;
-    }
+    }    
 
     Xcop = Cx - Cz * ddCx / g;
     Ycop = Cy - Cz * ddCy / g;
-    /* CoM Trajectory End */
+    /* #endregion: CoM Trajectory End */
 
-    /* Feet Trajectory Start */
+    /* #region: Feet Trajectory Start */
     double Velx_r, Accx_r, Velx_l, Accx_l;
     double Vely_r, Accy_r, Vely_l, Accy_l;
     double Velz_r, Accz_r, Velz_l, Accz_l;
     if (FuncInterval(RealTime, t0, t1, dt) == true) // Put robot on the ground
     {
-        Posx_r = 0; Velx_r = 0; Accx_r = 0;
-        Posy_r = 0; Vely_r = 0; Accy_r = 0;
-        Posz_r = 0; Velz_r = 0; Accz_r = 0;
-
-        Posx_l = 0; Velx_l = 0; Accx_l = 0;
-        Posy_l = 0; Vely_l = 0; Accy_l = 0;
-        Posz_l = 0; Velz_l = 0; Accz_l = 0;
+        Footx_R.setZero(); Footy_R.setZero(); Footz_R.setZero();
+        Footx_L.setZero(); Footy_L.setZero(); Footz_L.setZero();
         
     }
     else if (FuncInterval(RealTime, t1, t2, dt) == true) // Z - axis Foot trajectory initialization(First half step)
     {
-        trajFootx_L = FuncPoly5th(RealTime, t1, t2, 0, 0, 0, Strx / 2, 0, 0);
-        trajFooty_L = FuncPoly5th(RealTime, t1, t2, 0, 0, 0, Stry / 2, 0, 0);
-        trajFootz_L = FuncPoly6th(RealTime, t1, t2, 0, 0, 0, 0, 0, 0, Fh);
+        Footx_R.setZero(); Footy_R.setZero(); Footz_R.setZero();
 
-        Posx_l = trajFootx_L(0); Velx_l = trajFootx_L(1); Accx_l = trajFootx_L(2);
-        Posy_l = trajFooty_L(0); Vely_l = trajFooty_L(1); Accy_l = trajFooty_L(2);
-        Posz_l = trajFootz_L(0); Velz_l = trajFootz_L(1); Accz_l = trajFootz_L(2);
-
-        Posx_r = 0; Velx_r = 0; Accx_r = 0;
-        Posy_r = 0; Vely_r = 0; Accy_r = 0;
-        Posz_r = 0; Velz_r = 0; Accz_r = 0;
-        
+        Footx_L = FuncPoly5th(RealTime, t1, t2, 0, 0, 0, Strx / 2, 0, 0);
+        Footy_L = FuncPoly5th(RealTime, t1, t2, 0, 0, 0, Stry / 2, 0, 0);
+        Footz_L = FuncPoly6th(RealTime, t1, t2, 0, 0, 0, 0, 0, 0, Fh);        
     }
     else if (FuncInterval(RealTime, t2, tstart_w, dt) == true)
     {
-        Posx_r = 0; Velx_r = 0; Accx_r = 0;
-        Posy_r = 0; Vely_r = 0; Accy_r = 0;
-        Posz_r = 0; Velz_r = 0; Accz_r = 0;
+        Footx_R.setZero(); Footy_R.setZero(); Footz_R.setZero();
 
-        Posx_l = Strx / 2; Velx_l = 0; Accx_l = 0;
-        Posy_l = Stry / 2; Vely_l = 0; Accy_l = 0;
-        Posz_l = 0; Velz_l = 0; Accz_l = 0;
-        
+        Footx_L << Strx/2, 0, 0;
+        Footy_L << Stry/2, 0, 0;
+        Footz_L << 0, 0, 0;        
     }
     else if (FuncInterval(RealTime, tstart_w, tend_w, dt) == true) // Z - axis Foot trajectory afater initialization
     {
@@ -504,101 +469,78 @@ Eigen::VectorXd comTrajectory(double RealTime, double Ts, double Td, int Nphase,
         {
             double ts = tstart_w + (Ts + Td) * k;
             
-            trajFootx_L = FuncPoly5th(RealTime, ts, ts + Ts, Strx / 2 + Strx * kx, 0, 0, Strx / 2 + Strx * (kx + 1), 0, 0);
-            trajFooty_L = FuncPoly5th(RealTime, ts, ts + Ts, Stry / 2 + Stry * kx, 0, 0, Stry / 2 + Stry * (kx + 1), 0, 0);
-            trajFootz_L = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, Fh);
+            Footx_L = FuncPoly5th(RealTime, ts, ts + Ts, Strx / 2 + Strx * kx, 0, 0, Strx / 2 + Strx * (kx + 1), 0, 0);
+            Footy_L = FuncPoly5th(RealTime, ts, ts + Ts, Stry / 2 + Stry * kx, 0, 0, Stry / 2 + Stry * (kx + 1), 0, 0);
+            Footz_L = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, Fh);
 
-            trajFootx_R = FuncPoly5th(RealTime, ts, ts + Ts, Strx * (kx + 1), 0, 0, Strx * (kx + 1), 0, 0);
-            trajFooty_R = FuncPoly5th(RealTime, ts, ts + Ts, Stry * (kx + 1), 0, 0, Stry * (kx + 1), 0, 0);
-            trajFootz_R = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, 0);
-
-            Posx_l = trajFootx_L(0); Velx_l = trajFootx_L(1); Accx_l = trajFootx_L(2);
-            Posy_l = trajFooty_L(0); Vely_l = trajFooty_L(1); Accy_l = trajFooty_L(2);
-            Posz_l = trajFootz_L(0); Velz_l = trajFootz_L(1); Accz_l = trajFootz_L(2);
-            
-            Posx_r = trajFootx_R(0); Velx_r = trajFootx_R(1); Accx_r = trajFootx_R(2);
-            Posy_r = trajFooty_R(0); Vely_r = trajFooty_R(1); Accy_r = trajFooty_R(2);
-            Posz_r = trajFootz_R(0); Velz_r = trajFootz_R(1); Accz_r = trajFootz_R(2);
+            Footx_R = FuncPoly5th(RealTime, ts, ts + Ts, Strx * (kx + 1), 0, 0, Strx * (kx + 1), 0, 0);
+            Footy_R = FuncPoly5th(RealTime, ts, ts + Ts, Stry * (kx + 1), 0, 0, Stry * (kx + 1), 0, 0);
+            Footz_R = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, 0);
         }
         else // Right foot swing, left foot stand
         {
             double ts = tstart_w + (Ts + Td) * k;
 
-            trajFootx_L = FuncPoly5th(RealTime, ts, ts + Ts, Strx / 2 + Strx * kx, 0, 0, Strx / 2 + Strx * kx, 0, 0);
-            trajFooty_L = FuncPoly5th(RealTime, ts, ts + Ts, Stry / 2 + Stry * kx, 0, 0, Stry / 2 + Stry * kx, 0, 0);
-            trajFootz_L = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, 0);
+            Footx_L = FuncPoly5th(RealTime, ts, ts + Ts, Strx / 2 + Strx * kx, 0, 0, Strx / 2 + Strx * kx, 0, 0);
+            Footy_L = FuncPoly5th(RealTime, ts, ts + Ts, Stry / 2 + Stry * kx, 0, 0, Stry / 2 + Stry * kx, 0, 0);
+            Footz_L = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, 0);
 
-            trajFootx_R = FuncPoly5th(RealTime, ts, ts + Ts, Strx * kx, 0, 0, Strx * (kx + 1), 0, 0);
-            trajFooty_R = FuncPoly5th(RealTime, ts, ts + Ts, Stry * kx, 0, 0, Stry * (kx + 1), 0, 0);
-            trajFootz_R = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, Fh);
-
-            Posx_l = trajFootx_L(0); Velx_l = trajFootx_L(1); Accx_l = trajFootx_L(2);
-            Posy_l = trajFooty_L(0); Vely_l = trajFooty_L(1); Accy_l = trajFooty_L(2);
-            Posz_l = trajFootz_L(0); Velz_l = trajFootz_L(1); Accz_l = trajFootz_L(2);
-
-            Posx_r = trajFootx_R(0); Velx_r = trajFootx_R(1); Accx_r = trajFootx_R(2);
-            Posy_r = trajFooty_R(0); Vely_r = trajFooty_R(1); Accy_r = trajFooty_R(2);
-            Posz_r = trajFootz_R(0); Velz_r = trajFootz_R(1); Accz_r = trajFootz_R(2);
+            Footx_R = FuncPoly5th(RealTime, ts, ts + Ts, Strx * kx, 0, 0, Strx * (kx + 1), 0, 0);
+            Footy_R = FuncPoly5th(RealTime, ts, ts + Ts, Stry * kx, 0, 0, Stry * (kx + 1), 0, 0);
+            Footz_R = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, Fh);
         }
     }
     else if (FuncInterval(RealTime, tend_w, t3, dt) == true)
     {
         if (((k + 1) % 2) == 0)
         {
-            trajFootx_R = FuncPoly5th(RealTime, tend_w, t3, Strx * (kx + 1), 0, 0, Strx / 2 + Strx * (kx + 1), 0, 0);
-            trajFooty_R = FuncPoly5th(RealTime, tend_w, t3, Stry * (kx + 1), 0, 0, Stry / 2 + Stry * (kx + 1), 0, 0);
-            trajFootz_R = FuncPoly6th(RealTime, tend_w, t3, 0, 0, 0, 0, 0, 0, Fh);
-            
-            Posx_r = trajFootx_R(0); Velx_r = trajFootx_R(1); Accx_r = trajFootx_R(2);
-            Posy_r = trajFooty_R(0); Vely_r = trajFooty_R(1); Accy_r = trajFooty_R(2);
-            Posz_r = trajFootz_R(0); Velz_r = trajFootz_R(1); Accz_r = trajFootz_R(2);
+            Footx_R = FuncPoly5th(RealTime, tend_w, t3, Strx * (kx + 1), 0, 0, Strx / 2 + Strx * (kx + 1), 0, 0);
+            Footy_R = FuncPoly5th(RealTime, tend_w, t3, Stry * (kx + 1), 0, 0, Stry / 2 + Stry * (kx + 1), 0, 0);
+            Footz_R = FuncPoly6th(RealTime, tend_w, t3, 0, 0, 0, 0, 0, 0, Fh);
 
-            Posx_l = Strx / 2 + Strx * (kx + 1); Velx_l = 0; Accx_l = 0;
-            Posy_l = Stry / 2 + Stry * (kx + 1); Vely_l = 0; Accy_l = 0;
-            Posz_l = 0; Velz_l = 0; Accz_l = 0;
+            Footx_L << Strx/2 + Strx*(kx + 1), 0, 0;
+            Footy_L << Stry/2 + Stry*(kx + 1), 0, 0;
+            Footy_L << 0, 0, 0;
         }
         else
         {
-            trajFootx_L = FuncPoly5th(RealTime, tend_w, t3, Strx / 2 + Strx * (kx), 0, 0, Strx + Strx * (kx), 0, 0);
-            trajFooty_L = FuncPoly5th(RealTime, tend_w, t3, Stry / 2 + Stry * (kx), 0, 0, Stry + Stry * (kx), 0, 0);
-            trajFootz_L = FuncPoly6th(RealTime, tend_w, t3, 0, 0, 0, 0, 0, 0, Fh);
+            Footx_R << Strx*(kx + 1), 0, 0;
+            Footy_R << Stry*(kx + 1), 0, 0;
+            Footz_R << 0, 0, 0;
 
-            Posx_l = trajFootx_L(0); Velx_l = trajFootx_L(1); Accx_l = trajFootx_L(2);
-            Posy_l = trajFooty_L(0); Vely_l = trajFooty_L(1); Accy_l = trajFooty_L(2);
-            Posz_l = trajFootz_L(0); Velz_l = trajFootz_L(1); Accz_l = trajFootz_L(2);
-
-            Posx_r = Strx * (kx + 1); Velx_r = 0; Accx_r = 0;
-            Posy_r = Stry * (kx + 1); Vely_r = 0; Accy_r = 0;
-            Posz_r = 0; Velz_r = 0; Accz_r = 0;
+            Footx_L = FuncPoly5th(RealTime, tend_w, t3, Strx / 2 + Strx * (kx), 0, 0, Strx + Strx * (kx), 0, 0);
+            Footy_L = FuncPoly5th(RealTime, tend_w, t3, Stry / 2 + Stry * (kx), 0, 0, Stry + Stry * (kx), 0, 0);
+            Footz_L = FuncPoly6th(RealTime, tend_w, t3, 0, 0, 0, 0, 0, 0, Fh);
         }       
     }
     else
     {
-        Posz_l = 0; Velz_l = 0; Accz_l = 0;
-        Posz_r = 0; Velz_r = 0; Accz_r = 0;
         if (((k + 1) % 2) == 0)
         {
-            Posx_l = Strx / 2 + Strx * (kx + 1); Velx_l = 0; Accx_l = 0;
-            Posx_r = Strx / 2 + Strx * (kx + 1); Velx_r = 0; Accx_r = 0;
-            Posy_l = Stry / 2 + Stry * (kx + 1); Vely_l = 0; Accy_l = 0;
-            Posy_r = Stry / 2 + Stry * (kx + 1); Vely_r = 0; Accy_r = 0;
+            Footx_R << Strx/2 + Strx*(kx + 1), 0, 0;
+            Footy_R << Stry/2 + Stry*(kx + 1), 0, 0;
+            Footz_R << 0, 0, 0;
+
+            Footx_L << Strx/2 + Strx*(kx + 1), 0, 0;
+            Footy_L << Stry/2 + Stry*(kx + 1), 0, 0;
+            Footz_L << 0, 0, 0;
         }
         else
         {
-            Posx_l = Strx * (kx + 1); Velx_l = 0; Accx_l = 0;
-            Posx_r = Strx * (kx + 1); Velx_r = 0; Accx_r = 0;
-            Posy_l = Stry * (kx + 1); Vely_l = 0; Accy_l = 0;
-            Posy_r = Stry * (kx + 1); Vely_r = 0; Accy_r = 0;
+            Footx_R << Strx*(kx + 1), 0, 0;
+            Footy_R << Stry*(kx + 1), 0, 0;
+            Footz_R << 0, 0, 0;
+
+            Footx_L << Strx*(kx + 1), 0, 0;
+            Footy_L << Stry*(kx + 1), 0, 0;
+            Footz_L << 0, 0, 0;
         }
     }
-    /* Feet Trajectory End */
-
-    
-    returnVals << Cx, dCx, ddCx, Cy, dCy, ddCy, Posx_r, Posy_r, Posz_r, Posx_l, Posy_l, Posz_l, Strx, Strx/2, Stry, Stry/2;
-    return returnVals;
+    /* #endregion: Feet Trajectory End */
+   
 }
 
-Eigen::VectorXd trajGeneration(double RealTime, bool walkEnable, double command_Vx, double command_Vy, double height, double dt)
+void trajectory::trajGeneration(double RealTime, bool walkEnable, double command_Vx, double command_Vy, double height, double dt)
 {
     Eigen::VectorXd outVals(13);
     double footPx_R = 0.0, footPy_R = 0, footPz_R = 0.0;
@@ -608,7 +550,7 @@ Eigen::VectorXd trajGeneration(double RealTime, bool walkEnable, double command_
     walk_enabled = walkEnable;
 
     if(walk_enabled){
-        can_switch = (AreDoubleSame(walkTraj(8),Fc)) || (AreDoubleSame(walkTraj(11),Fc));
+        can_switch = (AreDoubleSame(Footz_R(0),Fc)) || (AreDoubleSame(Footz_L(0),Fc));
     } else {
         can_switch = false;
     }
@@ -616,7 +558,7 @@ Eigen::VectorXd trajGeneration(double RealTime, bool walkEnable, double command_
     if(abs(Vx_mean) > 0 || abs(Vy_mean) > 0){
         can_stop = false;
     } else {
-        can_stop = (AreDoubleSame(walkTraj(8),0)) && (AreDoubleSame(walkTraj(11),0));
+        can_stop = (AreDoubleSame(Footz_R(0),0)) && (AreDoubleSame(Footz_L(0),0));
     }
 
     if(can_switch && walk_enabled){
@@ -624,20 +566,20 @@ Eigen::VectorXd trajGeneration(double RealTime, bool walkEnable, double command_
         Vy_mean = command_Vy; 
     }
 
-    if(prev_vx_mean != Vx_mean) Cx += walkTraj(0);
-    if(prev_vy_mean != Vy_mean) Cy += walkTraj(3);
+    if(prev_vx_mean != Vx_mean) Comx += Cx;
+    if(prev_vy_mean != Vy_mean) Comy += Cy;
 
     if((prev_vx_mean != Vx_mean) || (prev_vy_mean != Vy_mean)){
-        if(AreDoubleSame(walkTraj(8),Fc)){
+        if(AreDoubleSame(Footz_R(0),Fc)){
             w_start_time = RealTime - Ts - Td - Ts/2.0;
-            walkTraj = comTrajectory(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, height, Fc, dt);
-            if(prev_vx_mean != Vx_mean) Cx -= walkTraj(13);
-            if(prev_vy_mean != Vy_mean) Cy -= walkTraj(15);
-        }else if(AreDoubleSame(walkTraj(11),Fc)){
+            comTrajectory(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, height, Fc, dt);
+            if(prev_vx_mean != Vx_mean) Comx -= Strx/2;
+            if(prev_vy_mean != Vy_mean) Comy -= Stry/2;
+        }else if(AreDoubleSame(Footz_L(0),Fc)){
             w_start_time = RealTime - Ts - Td - Ts - Td - Ts/2.0 ;
-            walkTraj = comTrajectory(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, height, Fc, dt);
-            if(prev_vx_mean != Vx_mean) Cx -= walkTraj(12);
-            if(prev_vy_mean != Vy_mean) Cy -= walkTraj(14);
+            comTrajectory(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, height, Fc, dt);
+            if(prev_vx_mean != Vx_mean) Comx -= Strx;
+            if(prev_vy_mean != Vy_mean) Comy -= Stry;
         }
 
         if(prev_vx_mean != Vx_mean) prev_vx_mean = Vx_mean;
@@ -651,13 +593,10 @@ Eigen::VectorXd trajGeneration(double RealTime, bool walkEnable, double command_
         Nphase = 0;
     }
     
-    walkTraj = comTrajectory(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, height, Fc, dt);
-    Xc = walkTraj(0)+Cx; Yc = walkTraj(3)+Cy;
-    dXc = walkTraj(1); dYc = walkTraj(4); 
-    ddXc = walkTraj(2); ddYc = walkTraj(5);
-    footPx_R = walkTraj(6)+Cx; footPy_R = walkTraj(7)+Cy; footPz_R = walkTraj(8);
-    footPx_L = walkTraj(9)+Cx; footPy_L = walkTraj(10)+Cy; footPz_L = walkTraj(11);
-
-    outVals << Xc, dXc, ddXc, Yc, dYc, ddYc, height, footPx_R, footPx_L, footPy_R, footPy_L, footPz_R, footPz_L;
-    return outVals;
+    comTrajectory(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, height, Fc, dt);
+    Xc = Cx+Comx; Yc = Cy+Comy;
+    dXc = dCx; dYc = dCy; 
+    ddXc = ddCx; ddYc = ddCy;
+    Pfoot_R << Footx_R(0)+Comx, Footy_R(0)+Comy, Footz_R(0);
+    Pfoot_L << Footx_L(0)+Comx, Footy_L(0)+Comy, Footz_L(0);    
 }

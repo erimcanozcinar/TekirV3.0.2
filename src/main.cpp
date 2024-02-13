@@ -51,11 +51,14 @@ int main(int argc, char** argv) {
     Kp << 120, 70, 70;
     Kd << 12, 7, 7;
 
-    trajOut.setZero();
-
     Tau_LF.setZero(); Tau_RF.setZero(); Tau_LB.setZero(); Tau_RB.setZero();
     
     prevdQcm.setZero(); prevQcm.setZero(); prevQcm_filtered.setZero();
+    /* #endregion */
+
+    /* #region: Init classes*/
+    controller jStick;
+    trajectory traj;
     /* #endregion */
 
     /* #region: Initialize Robot */
@@ -80,29 +83,23 @@ int main(int argc, char** argv) {
     server.launchServer();
     /* #endregion */
 
-    while (!quit) {
+    while (!jStick.close) {
         auto start_time = std::chrono::high_resolution_clock::now();
         RS_TIMED_LOOP(int(world.getTimeStep()*1e6));
         t = world.getWorldTime();
         dt = world.getTimeStep();
 
         /* #region: TRAJECTORY GENERATION WITH CONTROLLER */
-        dualShockController(event_queue, event, cmdJoy, walkEnable, quit);
+        jStick.dualShockController(event_queue, event);
         for(int i=0; i<22; i++)
         {
-            cmdJoyF[i] = LPF(cmdJoy[i], pre_cmdJoyF[i], 2*PI*0.2, dt);
+            cmdJoyF[i] = LPF(jStick.joyCmd[i], pre_cmdJoyF[i], 2*PI*0.2, dt);
             pre_cmdJoyF[i] = cmdJoyF[i];
         }
-        cmd_Vx = cmdJoy[0]; cmd_Vy = cmdJoy[1];
+        cmd_Vx = jStick.joyCmd[0]; cmd_Vy = jStick.joyCmd[1];
         cmd_yaw = cmdJoyF[2];  cmd_pitch = cmdJoyF[3]; cmd_roll = cmdJoyF[4];
 
-        trajOut = trajGeneration(t, walkEnable, cmd_Vx, cmd_Vy, cmdJoyF[5], dt);
-        Xcom = trajOut(0), Ycom = trajOut(3);
-        dXcom = trajOut(1), dYcom = trajOut(4);
-        ddXcom = trajOut(2), ddYcom = trajOut(5);
-        Zcom = trajOut(6);
-        Px_Rfoot = trajOut(7); Py_Rfoot = trajOut(9); Pz_Rfoot = trajOut(11);
-        Px_Lfoot = trajOut(8); Py_Lfoot = trajOut(10); Pz_Lfoot = trajOut(12);
+        traj.trajGeneration(t, jStick.walkEnable, cmd_Vx, cmd_Vy, cmdJoyF[5], dt);
         /* #endregion */
         
         /* #region: CONTACT DEFINITION START */
@@ -174,12 +171,12 @@ int main(int argc, char** argv) {
         // Zroll_right = Kp_roll * (0 - imuRot(0)) + Kd_roll * (0 - dimuRot(0));
         // Zpitch_LF = Zpitch_front; Zpitch_RF = Zpitch_front; Zpitch_LB = Zpitch_back; Zpitch_RB = Zpitch_back;
         // Zroll_LF = Zroll_left; Zroll_RF = Zroll_right; Zroll_LB = Zroll_left; Zroll_RB = Zroll_right;
-        // if (Pz_Lfoot > 0.0)
+        // if (traj.Pfoot_L(2) > 0.0)
         // {
         //     Zroll_LF = 0.0; Zpitch_LF = 0.0;
         //     Zroll_RB = 0.0; Zpitch_RB = 0.0;
         // }
-        // if (Pz_Rfoot > 0.0)
+        // if (traj.Pfoot_R(2) > 0.0)
         // {
         //     Zroll_RF = 0.0; Zpitch_RF = 0.0;
         //     Zroll_LB = 0.0; Zpitch_LB = 0.0;
@@ -210,14 +207,14 @@ int main(int argc, char** argv) {
         /* #endregion */
 
         /* #region: DESIRED FOOT POSITION */
-        Pcom << Xcom, Ycom, Zcom;
+        Pcom << traj.Xc, traj.Yc, traj.height;
         Rcom << genCoordinates(0), genCoordinates(1), genCoordinates(2);
         torsoRot << cmd_roll, cmd_pitch, cmd_yaw; // Torso Orientation       
 
-        Pf_LF << Px_Lfoot + Pfx_f, Py_Lfoot + Pfy + LatOut, Pfz + Pz_Lfoot;
-        Pf_RF << Px_Rfoot + Pfx_f, Py_Rfoot - Pfy - LatOut, Pfz + Pz_Rfoot;
-        Pf_LB << Px_Rfoot - Pfx_b, Py_Rfoot + Pfy + LatOut, Pfz + Pz_Rfoot;
-        Pf_RB << Px_Lfoot - Pfx_b, Py_Lfoot - Pfy - LatOut, Pfz + Pz_Lfoot;
+        Pf_LF << traj.Pfoot_L(0) + Pfx_f, traj.Pfoot_L(1) + Pfy + LatOut, Pfz + traj.Pfoot_L(2);
+        Pf_RF << traj.Pfoot_R(0) + Pfx_f, traj.Pfoot_R(1) - Pfy - LatOut, Pfz + traj.Pfoot_R(2);
+        Pf_LB << traj.Pfoot_R(0) - Pfx_b, traj.Pfoot_R(1) + Pfy + LatOut, Pfz + traj.Pfoot_R(2);
+        Pf_RB << traj.Pfoot_L(0) - Pfx_b, traj.Pfoot_L(1) - Pfy - LatOut, Pfz + traj.Pfoot_L(2);
         /* #endregion */
 
         /* #region: ANALYTIC INVERSE KINEMATIC */
@@ -265,7 +262,7 @@ int main(int argc, char** argv) {
 
         Mvmc = Itorso*(dWref + sqrt(200)*(Wref - rootAngvelocity) - 200*(orientControlRef(0)*quatVec - genCoordinates(3)*quatVecRef + 0*vec2SkewSym(quatVecRef)*quatVec));
 
-        Fvmc << MASS*(ddXcom + (ddXcom-genAcceleration(0))*0.1), MASS*(ddYcom + (ddYcom-genAcceleration(1))*0.1), MASS*(GRAVITY + (ddZcom-genAcceleration(2))*0.1), Mvmc(0), Mvmc(1), Mvmc(2);
+        Fvmc << MASS*(traj.ddXc + (traj.ddXc-genAcceleration(0))*0.1), MASS*(traj.ddYc + (traj.ddYc-genAcceleration(1))*0.1), MASS*(GRAVITY + (ddZcom-genAcceleration(2))*0.1), Mvmc(0), Mvmc(1), Mvmc(2);
         Fmatrix = VMC(Rf_LF, Rf_RF, Rf_LB, Rf_RB, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
         F1cont << Fmatrix(0, 0), Fmatrix(0, 1), Fmatrix(0, 2);
         F2cont << Fmatrix(1, 0), Fmatrix(1, 1), Fmatrix(1, 2);
@@ -325,10 +322,10 @@ int main(int argc, char** argv) {
 
         auto end_time = std::chrono::high_resolution_clock::now();
         auto elapsed_time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-        // std::cout << ddYcom << " microseconds" << std::endl;  
+        // std::cout << traj.ddYc << " microseconds" << std::endl;  
 
         /* Log data (fp0:NewtonEulerTorques, fp1:PD_torques, fp2: InvDynTorques ) */
-        fprintf(fp0, "%f %f %f %f %f %d %f %f\n", t, Xcom, Ycom, dXcom, dYcom, int(elapsed_time.count()), cmdJoy[5], cmdJoyF[5]);
+        fprintf(fp0, "%f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.Yc, traj.dXc, traj.dYc, traj.Pfoot_R(0), traj.Pfoot_L(0), cmdJoyF[5]);
 
     }
     server.killServer();
