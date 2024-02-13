@@ -1,7 +1,7 @@
 #include "main.hpp"
 
 int main(int argc, char** argv) {    
-    /* Raisim */
+    /* #region: Raisim */
     auto binaryPath = raisim::Path::setFromArgv(argv[0]);
     raisim::World::setActivationKey(binaryPath.getDirectory() + "\\activation.raisim");
     raisim::World world;
@@ -18,20 +18,23 @@ int main(int argc, char** argv) {
     quadruped->getCollisionBody("Foot_rf/0").setMaterial("rubber");
     quadruped->getCollisionBody("Foot_lb/0").setMaterial("rubber");
     quadruped->getCollisionBody("Foot_rb/0").setMaterial("rubber");
+    /* #endregion */
 
-    /* Create Log file */
+    /* #region: Create Log file */
     FILE* fp0;
     fp0 = fopen("/home/erim/RaiSim_Simulations/TekirV3.0.1/Log/dataLog.txt", "w");
+    /* #endregion */
 
-    /* Allegro */
+    /* #region: Allegro */
     al_init();
     al_install_joystick();
     ALLEGRO_EVENT_QUEUE *event_queue = al_create_event_queue();
     al_register_event_source(event_queue, al_get_joystick_event_source());
     std::cout << "Gamepad routines enabled." << std::endl;
     ALLEGRO_EVENT event;
+    /* #endregion */
 
-    /* Init Eigen variables */
+    /* #region: Init Eigen variables */
     Itorso << 0.410, 0, 0,
               0, 0.908, 0,
               0, 0, 1.192;
@@ -53,8 +56,9 @@ int main(int argc, char** argv) {
     Tau_LF.setZero(); Tau_RF.setZero(); Tau_LB.setZero(); Tau_RB.setZero();
     
     prevdQcm.setZero(); prevQcm.setZero(); prevQcm_filtered.setZero();
+    /* #endregion */
 
-    /* Initialize Robot */
+    /* #region: Initialize Robot */
     Pf_LF << Pfx_f, Pfy + LatOut, Pfz;
     Pf_RF << Pfx_f, -Pfy - LatOut, Pfz;
     Pf_LB << -Pfx_b, Pfy + LatOut, Pfz;
@@ -67,12 +71,14 @@ int main(int argc, char** argv) {
     Q_RB = fullBodyIKan(Pf_RB, Pcom, torsoRot, 4);
     initialConditions << ComX, ComY, ComZ, quat_w, quat_x, quat_y, quat_z, Q_LF(0), Q_LF(1), Q_LF(2), Q_RF(0), Q_RF(1), Q_RF(2), Q_LB(0), Q_LB(1), Q_LB(2), Q_RB(0), Q_RB(1), Q_RB(2);
     quadruped->setGeneralizedCoordinate(initialConditions);
+    /* #endregion */
 
-    /* Launch raisim server for visualization.Can be visualized on raisimUnity */
+    /* #region: Launch raisim server for visualization.Can be visualized on raisimUnity */
     raisim::RaisimServer server(&world);
     server.setMap("default");
     server.focusOn(quadruped);
     server.launchServer();
+    /* #endregion */
 
     while (!quit) {
         auto start_time = std::chrono::high_resolution_clock::now();
@@ -80,7 +86,7 @@ int main(int argc, char** argv) {
         t = world.getWorldTime();
         dt = world.getTimeStep();
 
-        /* TRAJECTORY GENERATION WITH CONTROLLER */
+        /* #region: TRAJECTORY GENERATION WITH CONTROLLER */
         dualShockController(event_queue, event, cmdJoy, walkEnable, quit);
         for(int i=0; i<22; i++)
         {
@@ -97,8 +103,9 @@ int main(int argc, char** argv) {
         Zcom = trajOut(6);
         Px_Rfoot = trajOut(7); Py_Rfoot = trajOut(9); Pz_Rfoot = trajOut(11);
         Px_Lfoot = trajOut(8); Py_Lfoot = trajOut(10); Pz_Lfoot = trajOut(12);
+        /* #endregion */
         
-        /* CONTACT DEFINITION START */
+        /* #region: CONTACT DEFINITION START */
         for (auto& contact : quadruped->getContacts()) // LF:3, RF:2, LB:1, RB:0
         {
             if (contact.skip()) continue;
@@ -123,8 +130,9 @@ int main(int argc, char** argv) {
                 Pcon_RB = contact.getPosition().e().transpose();
             }
         }
+        /* #endregion */
 
-        /* READ ACTUAL DATA START */
+        /* #region: READ ACTUAL DATA START */
         genCoordinates = quadruped->getGeneralizedCoordinate().e();
         genVelocity = quadruped->getGeneralizedVelocity().e();
         for (int i = 0; i < 18; i++)
@@ -157,8 +165,9 @@ int main(int argc, char** argv) {
         jPositions << q_LF(0), q_LF(1), q_LF(2), q_RF(0), q_RF(1), q_RF(2), q_LB(0), q_LB(1), q_LB(2), q_RB(0), q_RB(1), q_RB(2);
         jVelocities << dq_LF(0), dq_LF(1), dq_LF(2), dq_RF(0), dq_RF(1), dq_RF(2), dq_LB(0), dq_LB(1), dq_LB(2), dq_RB(0), dq_RB(1), dq_RB(2);
         jAccelerations << ddQ_LF(0), ddQ_LF(1), ddQ_LF(2), ddQ_RF(0), ddQ_RF(1), ddQ_RF(2), ddQ_LB(0), ddQ_LB(1), ddQ_LB(2), ddQ_RB(0), ddQ_RB(1), ddQ_RB(2);    
-        
-        /* ORIENTATION CONTROL */
+        /* #endregion */
+         
+        /* #region: ORIENTATION CONTROL */
         // Zpitch_front = Kp_pitch*(0 - imuRot(1)) + Kd_pitch*(0 - dimuRot(1));
         // Zpitch_back = -Kp_pitch*(0 - imuRot(1)) - Kd_pitch*(0 - dimuRot(1));
         // Zroll_left = -Kp_roll*(0 - imuRot(0)) - Kd_roll*(0 - dimuRot(0));
@@ -175,8 +184,9 @@ int main(int argc, char** argv) {
         //     Zroll_RF = 0.0; Zpitch_RF = 0.0;
         //     Zroll_LB = 0.0; Zpitch_LB = 0.0;
         // }
+        /* #endregion */
 
-        /* CENTRODIAL MOMENTUM */
+        /* #region: CENTRODIAL MOMENTUM */
         // if (t>5)
         // {
         //     Zfoot_offset = 0.1;
@@ -197,8 +207,9 @@ int main(int argc, char** argv) {
         // }
         // Qcm_RF << Qcm_filtered(0), Qcm_filtered(1), Qcm_filtered(2);
         // Qcm_LB << Qcm_filtered(3), Qcm_filtered(4), Qcm_filtered(5);
+        /* #endregion */
 
-        /* DESIRED FOOT POSITION */
+        /* #region: DESIRED FOOT POSITION */
         Pcom << Xcom, Ycom, Zcom;
         Rcom << genCoordinates(0), genCoordinates(1), genCoordinates(2);
         torsoRot << cmd_roll, cmd_pitch, cmd_yaw; // Torso Orientation       
@@ -207,8 +218,9 @@ int main(int argc, char** argv) {
         Pf_RF << Px_Rfoot + Pfx_f, Py_Rfoot - Pfy - LatOut, Pfz + Pz_Rfoot;
         Pf_LB << Px_Rfoot - Pfx_b, Py_Rfoot + Pfy + LatOut, Pfz + Pz_Rfoot;
         Pf_RB << Px_Lfoot - Pfx_b, Py_Lfoot - Pfy - LatOut, Pfz + Pz_Lfoot;
+        /* #endregion */
 
-        /* ANALYTIC INVERSE KINEMATIC */
+        /* #region: ANALYTIC INVERSE KINEMATIC */
         pre_dQ_LF = dQ_LF;
         pre_dQ_RF = dQ_RF;
         pre_dQ_LB = dQ_LB;
@@ -231,8 +243,9 @@ int main(int argc, char** argv) {
         ddQ_RF << Numdiff(dQ_RF(0), pre_dQ_RF(0), dt), Numdiff(dQ_RF(1), pre_dQ_RF(1), dt), Numdiff(dQ_RF(2), pre_dQ_RF(2), dt);
         ddQ_LB << Numdiff(dQ_LB(0), pre_dQ_LB(0), dt), Numdiff(dQ_LB(1), pre_dQ_LB(1), dt), Numdiff(dQ_LB(2), pre_dQ_LB(2), dt);
         ddQ_RB << Numdiff(dQ_RB(0), pre_dQ_RB(0), dt), Numdiff(dQ_RB(1), pre_dQ_RB(1), dt), Numdiff(dQ_RB(2), pre_dQ_RB(2), dt);
+        /* #endregion */
 
-        /* VMC CONTROLLER FOR TORSO */
+        /* #region: VMC CONTROLLER FOR TORSO */
         Rf_LF = fullBodyFK(imuRot, {0,0,0}, q_LF, 1);
         Rf_RF = fullBodyFK(imuRot, {0,0,0}, q_RF, 2);
         Rf_LB = fullBodyFK(imuRot, {0,0,0}, q_LB, 3);
@@ -250,7 +263,7 @@ int main(int argc, char** argv) {
         quatVecRef << orientControlRef(1), orientControlRef(2), orientControlRef(3);
         quatVec << genCoordinates(4), genCoordinates(5), genCoordinates(6);
 
-        Mvmc = Itorso*(dWref + sqrt(50)*(Wref - rootAngvelocity) - 50*(orientControlRef(0)*quatVec - genCoordinates(3)*quatVecRef + vec2SkewSym(quatVecRef)*quatVec));
+        Mvmc = Itorso*(dWref + sqrt(200)*(Wref - rootAngvelocity) - 200*(orientControlRef(0)*quatVec - genCoordinates(3)*quatVecRef + 0*vec2SkewSym(quatVecRef)*quatVec));
 
         Fvmc << MASS*(ddXcom + (ddXcom-genAcceleration(0))*0.1), MASS*(ddYcom + (ddYcom-genAcceleration(1))*0.1), MASS*(GRAVITY + (ddZcom-genAcceleration(2))*0.1), Mvmc(0), Mvmc(1), Mvmc(2);
         Fmatrix = VMC(Rf_LF, Rf_RF, Rf_LB, Rf_RB, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
@@ -258,12 +271,14 @@ int main(int argc, char** argv) {
         F2cont << Fmatrix(1, 0), Fmatrix(1, 1), Fmatrix(1, 2);
         F3cont << Fmatrix(2, 0), Fmatrix(2, 1), Fmatrix(2, 2);
         F4cont << Fmatrix(3, 0), Fmatrix(3, 1), Fmatrix(3, 2);
+        /* #endregion */
         
-        /* INVERSE DYNAMICS */
-        jffTorques = funNewtonEuler4Leg(rootAbsacceleration, rootOrientation, rootAngvelocity, rootAngacceleration, jPositions, jVelocities, jAccelerations, F1cont, F2cont, F3cont, F4cont);
+        /* #region: INVERSE DYNAMICS */
+        jffTorques = funNewtonEuler4Leg(rootAbsacceleration, rootOrientation, rootAngvelocity, rootAngacceleration, jPositions, jVelocities, jAccelerations, rootOrientation.transpose()*F1cont, rootOrientation.transpose()*F2cont, rootOrientation.transpose()*F3cont, rootOrientation.transpose()*F4cont);
         jffTorques2 = funNewtonEuler4Leg(rootAbsacceleration, rootOrientation, rootAngvelocity*0, rootAngacceleration, jPositions, jVelocities*0, jAccelerations, F1cont*0, F2cont*0, F3cont*0, F4cont*0);
+        /* #endregion */
 
-        /* INVERSE DYNAMICS WITH RAISIM*/
+        /* #region: INVERSE DYNAMICS WITH RAISIM*/
         Tau1_JF = JacTranspose_LF(q_LF(0), q_LF(1), q_LF(2), 30*PI/180) * (rootOrientation.transpose() * F1cont);
         Tau2_JF = JacTranspose_RF(q_RF(0), q_RF(1), q_RF(2), -30*PI/180) * (rootOrientation.transpose() * F2cont);
         Tau3_JF = JacTranspose_LB(q_LB(0), q_LB(1), q_LB(2), -30*PI/180) * (rootOrientation.transpose() * F3cont);
@@ -272,8 +287,9 @@ int main(int argc, char** argv) {
         JF << 0, 0, 0, 0, 0, 0, Tau1_JF(0), Tau1_JF(1), Tau1_JF(2), Tau2_JF(0), Tau2_JF(1), Tau2_JF(2), Tau3_JF(0), Tau3_JF(1), Tau3_JF(2), Tau4_JF(0), Tau4_JF(1), Tau4_JF(2);
         genAccelerationVec << genAcceleration(0), genAcceleration(1), genAcceleration(2), rootAngacceleration(0), rootAngacceleration(1), rootAngacceleration(2), ddQ_LF(0), ddQ_LF(1), ddQ_LF(2), ddQ_RF(0), ddQ_RF(1), ddQ_RF(2), ddQ_LB(0), ddQ_LB(1), ddQ_LB(2), ddQ_RB(0), ddQ_RB(1), ddQ_RB(2);
         jointTorques = quadruped->getMassMatrix().e() * genAccelerationVec + quadruped->getNonlinearities(world.getGravity()).e() - 0*JF;
+        /* #endregion */
 
-        /* PD CONTROLLER */
+        /* #region: PD CONTROLLER */
         for (int i = 0; i < 3; i++)
         {
             // i = 0: Hip AA, i = 1: Hip FE, i = 2: Knee FE
@@ -282,12 +298,14 @@ int main(int argc, char** argv) {
             Tau_LB(i) = Kp(i)*(Q_LB(i) - q_LB(i)) + Kd(i)*(dQ_LB(i) - dq_LB(i)) + jffTorques(i+6);
             Tau_RB(i) = Kp(i)*(Q_RB(i) - q_RB(i)) + Kd(i)*(dQ_RB(i) - dq_RB(i)) + jffTorques(i+9);
         }
+        /* #endregion */
 
-        /* SEND COMMEND TO THE ROBOT */
+        /* #region: SEND COMMEND TO THE ROBOT */
         F << 0, 0, 0, 0, 0, 0, Tau_LF(0), Tau_LF(1), Tau_LF(2), Tau_RF(0), Tau_RF(1), Tau_RF(2), Tau_LB(0), Tau_LB(1), Tau_LB(2), Tau_RB(0), Tau_RB(1), Tau_RB(2);
         quadruped->setGeneralizedForce(F);
+        /* #endregion */
 
-        /* PUSH ROBOT */
+        /* #region: PUSH ROBOT */
         Eigen::Vector3d F_ex;
         if (t > 6.13 && t < 6.23)
         {
@@ -298,10 +316,10 @@ int main(int argc, char** argv) {
             F_ex << 0, 0, 0;
         }
         //quadruped->setExternalForce(quadruped->getBodyIdx("torso"), F_ex);
+        /* #endregion */
                 
         // server.setCameraPositionAndLookAt({genCoordinates(0)-1.3,genCoordinates(1),genCoordinates(2)+0.6}, {genCoordinates(0),genCoordinates(1),genCoordinates(2)});
-                
-        
+               
                  
         server.integrateWorldThreadSafe(); 
 
