@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include "Eigen/Dense"
 #include <allegro5/allegro.h>
+#include <qpOASES.hpp>
 #include <allegro5/allegro_native_dialog.h>
 #include "trajectory.hpp"
 

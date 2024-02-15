@@ -1,6 +1,6 @@
 #include "main.hpp"
 
-int main(int argc, char** argv) {    
+int main(int argc, char** argv) {   
     /* #region: Raisim */
     auto binaryPath = raisim::Path::setFromArgv(argv[0]);
     raisim::World::setActivationKey(binaryPath.getDirectory() + "\\activation.raisim");
@@ -19,6 +19,8 @@ int main(int argc, char** argv) {
     quadruped->getCollisionBody("Foot_lb/0").setMaterial("rubber");
     quadruped->getCollisionBody("Foot_rb/0").setMaterial("rubber");
     /* #endregion */
+
+    
 
     /* #region: Create Log file */
     FILE* fp0;
