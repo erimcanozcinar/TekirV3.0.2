@@ -19,9 +19,7 @@ int main(int argc, char** argv) {
     quadruped->getCollisionBody("Foot_lb/0").setMaterial("rubber");
     quadruped->getCollisionBody("Foot_rb/0").setMaterial("rubber");
     /* #endregion */
-
     
-
     /* #region: Create Log file */
     FILE* fp0;
     fp0 = fopen("/home/erim/RaiSim_Simulations/TekirV3.0.1/Log/dataLog.txt", "w");
