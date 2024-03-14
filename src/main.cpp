@@ -13,6 +13,7 @@ int main(int argc, char** argv) {
     // ground->setAppearance("hidden");
 
     auto quadruped = world.addArticulatedSystem("/home/erim/RaiSim_Simulations/TekirV3.0.1/rsc/urdf/tekir3mesh_new.urdf");
+    // auto quadruped = world.addArticulatedSystem("/home/erim/RaiSim_Simulations/TekirV3.0.1/rsc/urdf/tekir3mesh.urdf");
     // auto quadruped = world.addArticulatedSystem("/home/erim/raisim_ws/rsc/Tekir/urdf/tekir3.urdf");
     quadruped->getCollisionBody("Foot_lf/0").setMaterial("rubber");
     quadruped->getCollisionBody("Foot_rf/0").setMaterial("rubber");
@@ -22,6 +23,7 @@ int main(int argc, char** argv) {
     
     /* #region: Create Log file */
     FILE* fp0;
+    FILE* fp1;
     fp0 = fopen("/home/erim/RaiSim_Simulations/TekirV3.0.1/Log/dataLog.txt", "w");
     /* #endregion */
 
@@ -62,17 +64,14 @@ int main(int argc, char** argv) {
     /* #endregion */
 
     /* #region: Initialize Robot */
-    Pf_LF << Pfx_f, Pfy + LatOut, Pfz;
-    Pf_RF << Pfx_f, -Pfy - LatOut, Pfz;
-    Pf_LB << -Pfx_b, Pfy + LatOut, Pfz;
-    Pf_RB << -Pfx_b, -Pfy - LatOut, Pfz;
-    Pcom << ComX, ComY, ComZ;
-    torsoRot << ComRoll, ComPitch, ComYaw;
-    Q_LF = fullBodyIKan(Pf_LF, Pcom, torsoRot, 1);
-    Q_RF = fullBodyIKan(Pf_RF, Pcom, torsoRot, 2);
-    Q_LB = fullBodyIKan(Pf_LB, Pcom, torsoRot, 3);
-    Q_RB = fullBodyIKan(Pf_RB, Pcom, torsoRot, 4);
-    initialConditions << ComX, ComY, ComZ, quat_w, quat_x, quat_y, quat_z, Q_LF(0), Q_LF(1), Q_LF(2), Q_RF(0), Q_RF(1), Q_RF(2), Q_LB(0), Q_LB(1), Q_LB(2), Q_RB(0), Q_RB(1), Q_RB(2);
+    traj.trajGeneration(0, false, 0, 0, 0, initComZ, dt);
+    Pcom << initComX, initComY, initComZ;
+    torsoRot << initComRoll, initComPitch, initComYaw;
+    Q_LF = fullBodyIKan(traj.Pfoot_LF, Pcom, torsoRot, 1);
+    Q_RF = fullBodyIKan(traj.Pfoot_RF, Pcom, torsoRot, 2);
+    Q_LB = fullBodyIKan(traj.Pfoot_LB, Pcom, torsoRot, 3);
+    Q_RB = fullBodyIKan(traj.Pfoot_RB, Pcom, torsoRot, 4);
+    initialConditions << initComX, initComY, initComZ, initQuat_w, initQuat_x, initQuat_y, initQuat_z, Q_LF(0), Q_LF(1), Q_LF(2), Q_RF(0), Q_RF(1), Q_RF(2), Q_LB(0), Q_LB(1), Q_LB(2), Q_RB(0), Q_RB(1), Q_RB(2);
     quadruped->setGeneralizedCoordinate(initialConditions);
     /* #endregion */
 
@@ -97,9 +96,8 @@ int main(int argc, char** argv) {
             pre_cmdJoyF[i] = cmdJoyF[i];
         }
         cmd_Vx = jStick.joyCmd[0]; cmd_Vy = jStick.joyCmd[1];
-        cmd_yaw = cmdJoyF[2];  cmd_pitch = cmdJoyF[3]; cmd_roll = cmdJoyF[4];
-
-        traj.trajGeneration(t, jStick.walkEnable, cmd_Vx, cmd_Vy, cmdJoyF[5], dt);
+        cmd_dyaw = jStick.joyCmd[2];  cmd_pitch = cmdJoyF[3]; cmd_roll = cmdJoyF[4];
+        traj.trajGeneration(t, jStick.walkEnable, cmd_Vx, cmd_Vy, cmd_dyaw, cmdJoyF[5], dt);
         /* #endregion */
         
         /* #region: CONTACT DEFINITION START */
@@ -206,15 +204,10 @@ int main(int argc, char** argv) {
         // Qcm_LB << Qcm_filtered(3), Qcm_filtered(4), Qcm_filtered(5);
         /* #endregion */
 
-        /* #region: DESIRED FOOT POSITION */
-        Pcom << traj.Xc, traj.Yc, traj.height;
+        /* #region: DESIRED COM POSITION & ORIENTATION */
+        Pcom << traj.Xc, traj.Yc, traj.Zc;
         Rcom << genCoordinates(0), genCoordinates(1), genCoordinates(2);
-        torsoRot << cmd_roll, cmd_pitch, cmd_yaw; // Torso Orientation       
-
-        Pf_LF << traj.Pfoot_L(0) + Pfx_f, traj.Pfoot_L(1) + Pfy + LatOut, Pfz + traj.Pfoot_L(2);
-        Pf_RF << traj.Pfoot_R(0) + Pfx_f, traj.Pfoot_R(1) - Pfy - LatOut, Pfz + traj.Pfoot_R(2);
-        Pf_LB << traj.Pfoot_R(0) - Pfx_b, traj.Pfoot_R(1) + Pfy + LatOut, Pfz + traj.Pfoot_R(2);
-        Pf_RB << traj.Pfoot_L(0) - Pfx_b, traj.Pfoot_L(1) - Pfy - LatOut, Pfz + traj.Pfoot_L(2);
+        torsoRot << cmd_roll, cmd_pitch, traj.Yaw; // Torso Orientation
         /* #endregion */
 
         /* #region: ANALYTIC INVERSE KINEMATIC */
@@ -226,10 +219,10 @@ int main(int argc, char** argv) {
         prevQ_RF = Q_RF;
         prevQ_LB = Q_LB;
         prevQ_RB = Q_RB;
-        Q_LF = fullBodyIKan(Pf_LF, Pcom, torsoRot, 1);
-        Q_RF = fullBodyIKan(Pf_RF, Pcom, torsoRot, 2);
-        Q_LB = fullBodyIKan(Pf_LB, Pcom, torsoRot, 3);
-        Q_RB = fullBodyIKan(Pf_RB, Pcom, torsoRot, 4);
+        Q_LF = fullBodyIKan(traj.Pfoot_LF, Pcom, torsoRot, 1);
+        Q_RF = fullBodyIKan(traj.Pfoot_RF, Pcom, torsoRot, 2);
+        Q_LB = fullBodyIKan(traj.Pfoot_LB, Pcom, torsoRot, 3);
+        Q_RB = fullBodyIKan(traj.Pfoot_RB, Pcom, torsoRot, 4);
 
         dQ_LF << Numdiff(Q_LF(0), prevQ_LF(0), dt), Numdiff(Q_LF(1), prevQ_LF(1), dt), Numdiff(Q_LF(2), prevQ_LF(2), dt);
         dQ_RF << Numdiff(Q_RF(0), prevQ_RF(0), dt), Numdiff(Q_RF(1), prevQ_RF(1), dt), Numdiff(Q_RF(2), prevQ_RF(2), dt);
@@ -260,14 +253,19 @@ int main(int argc, char** argv) {
         quatVecRef << orientControlRef(1), orientControlRef(2), orientControlRef(3);
         quatVec << genCoordinates(4), genCoordinates(5), genCoordinates(6);
 
-        Mvmc = Itorso*(dWref + sqrt(200)*(Wref - rootAngvelocity) - 200*(orientControlRef(0)*quatVec - genCoordinates(3)*quatVecRef + 0*vec2SkewSym(quatVecRef)*quatVec));
+        Mvmc = Itorso*(dWref + sqrt(150)*(Wref - rootAngvelocity) - 150*(orientControlRef(0)*quatVec - genCoordinates(3)*quatVecRef + 0*vec2SkewSym(quatVecRef)*quatVec));
 
-        Fvmc << MASS*(traj.ddXc + (traj.ddXc-genAcceleration(0))*0.1), MASS*(traj.ddYc + (traj.ddYc-genAcceleration(1))*0.1), MASS*(GRAVITY + (ddZcom-genAcceleration(2))*0.1), Mvmc(0), Mvmc(1), Mvmc(2);
+        Fvmc << (traj.ddXc + (traj.ddXc-genAcceleration(0))*10 + (traj.dXc - genVelocity(0))*1), (traj.ddYc + (traj.ddYc-genAcceleration(1))*10 + (traj.dYc - genVelocity(1))*1), (MASS*GRAVITY + (ddZcom-genAcceleration(2))*0 + (0 - genVelocity(2))*0), Mvmc(0), Mvmc(1), Mvmc(2);
         Fmatrix = VMC(Rf_LF, Rf_RF, Rf_LB, Rf_RB, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
+        // Fmatrix = VMC(traj.Pfoot_LF-Pcom, traj.Pfoot_RF-Pcom, Rf_LB, Rf_RB, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
         F1cont << Fmatrix(0, 0), Fmatrix(0, 1), Fmatrix(0, 2);
         F2cont << Fmatrix(1, 0), Fmatrix(1, 1), Fmatrix(1, 2);
         F3cont << Fmatrix(2, 0), Fmatrix(2, 1), Fmatrix(2, 2);
         F4cont << Fmatrix(3, 0), Fmatrix(3, 1), Fmatrix(3, 2);
+        // F1cont = rootOrientation.transpose()*F1cont;
+        // F2cont = rootOrientation.transpose()*F2cont;
+        // F3cont = rootOrientation.transpose()*F3cont;
+        // F4cont = rootOrientation.transpose()*F4cont;
         /* #endregion */
         
         /* #region: INVERSE DYNAMICS */
@@ -286,7 +284,7 @@ int main(int argc, char** argv) {
         jointTorques = quadruped->getMassMatrix().e() * genAccelerationVec + quadruped->getNonlinearities(world.getGravity()).e() - 0*JF;
         /* #endregion */
 
-        /* #region: PD CONTROLLER */
+        /* #region: PD + ID CONTROLLER */
         for (int i = 0; i < 3; i++)
         {
             // i = 0: Hip AA, i = 1: Hip FE, i = 2: Knee FE
@@ -325,8 +323,8 @@ int main(int argc, char** argv) {
         // std::cout << traj.ddYc << " microseconds" << std::endl;  
 
         /* Log data (fp0:NewtonEulerTorques, fp1:PD_torques, fp2: InvDynTorques ) */
-        fprintf(fp0, "%f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.Yc, traj.dXc, traj.dYc, traj.Pfoot_R(0), traj.Pfoot_L(0), cmdJoyF[5]);
-
+        fprintf(fp0, "%f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.Yc, traj.dXc, traj.dYc, traj.Pfoot_RF(0), traj.Pfoot_LF(0), traj.Yaw);
+        
     }
     server.killServer();
     fclose(fp0);

@@ -2,18 +2,7 @@
 
 /* Trajectory variables */
 Eigen::VectorXd walkTraj(16);
- 
 
-// /* Controller variables */
-// double Kv = 0.1;
-// double prev_vx_mean = 0.0, prev_vy_mean = 0.0;
-// bool walk_enabled = false;
-// bool can_switch = false;
-// bool can_stop = false;
-// double w_start_time = 0.0;
-
-// double MIN_BODY_HEIGHT = Zc*0.6;
-// double MAX_BODY_HEIGHT = 0.58;
 
 /* Functions */
 void controller::xboxController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_EVENT event, ALLEGRO_JOYSTICK* joyStick)
@@ -185,7 +174,7 @@ void controller::dualShockController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_E
                 case 1: /* Right stick y-axis and L2 axis */
                     switch (ev.joystick.axis) {
                         case 0: /* L2 axis */
-                            cmdZc = mapVal(ev.joystick.pos, 1.0, -1.0, MIN_BODY_HEIGHT, Zc);
+                            cmdZc = mapVal(ev.joystick.pos, 1.0, -1.0, MIN_BODY_HEIGHT, initZc);
                             joyCmd[5] = cmdZc;
                             break;
                         case 1:
@@ -195,7 +184,7 @@ void controller::dualShockController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_E
                                 roll = 0.0; 
                             }
                             else {
-                                if(joyState.button[4]) { roll = 0.174*ev.joystick.pos; }
+                                if(joyState.button[4]) { roll = 0.274*ev.joystick.pos; }
                                 else { yaw = -0.35*ev.joystick.pos; }                                 
                             }
                             if(abs(yaw) < 0.03) { yaw = 0.0;}
@@ -219,7 +208,7 @@ void controller::dualShockController(ALLEGRO_EVENT_QUEUE *event_queue, ALLEGRO_E
                             joyCmd[3] = pitch;
                             break;
                         case 1: /* R2 axis */
-                            cmdZc = mapVal(ev.joystick.pos, 1.0, -1.0, MAX_BODY_HEIGHT, Zc);
+                            cmdZc = mapVal(ev.joystick.pos, 1.0, -1.0, MAX_BODY_HEIGHT, initZc);
                             joyCmd[5] = cmdZc;
                             break;
                     }
@@ -540,11 +529,18 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
    
 }
 
-void trajectory::trajGeneration(double RealTime, bool walkEnable, double command_Vx, double command_Vy, double height, double dt)
+void trajectory::trajGeneration(double RealTime, bool walkEnable, double command_Vx, double command_Vy, double command_dYaw, double height, double dt)
 {
     Eigen::VectorXd outVals(13);
-    double footPx_R = 0.0, footPy_R = 0, footPz_R = 0.0;
-    double footPx_L = 0.0, footPy_L = 0, footPz_L = 0.0;
+    Eigen::Vector3d localPf_LF, localPf_RF, localPf_LB, localPf_RB;
+
+    Yaw = numIntegral(command_dYaw, prev_command_dYaw, prev_Yaw, dt);
+    prev_Yaw = Yaw;
+
+    comVel << command_Vx, command_Vy, 0;
+    comVel = RotateYaw(Yaw)*comVel;
+
+    
 
     if(!walk_enabled && walkEnable) w_start_time = RealTime;
     walk_enabled = walkEnable;
@@ -561,9 +557,9 @@ void trajectory::trajGeneration(double RealTime, bool walkEnable, double command
         can_stop = (AreDoubleSame(Footz_R(0),0)) && (AreDoubleSame(Footz_L(0),0));
     }
 
-    if(can_switch && walk_enabled){
-        Vx_mean = command_Vx; 
-        Vy_mean = command_Vy; 
+    if(can_switch && walk_enabled){        
+        Vx_mean = comVel(0); 
+        Vy_mean = comVel(1);
     }
 
     if(prev_vx_mean != Vx_mean) Comx += Cx;
@@ -594,9 +590,22 @@ void trajectory::trajGeneration(double RealTime, bool walkEnable, double command
     }
     
     comTrajectory(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, height, Fc, dt);
-    Xc = Cx+Comx; Yc = Cy+Comy;
+    Zc = height;
+    Xc = Cx+Comx; Yc = Cy+Comy; 
     dXc = dCx; dYc = dCy; 
-    ddXc = ddCx; ddYc = ddCy;
-    Pfoot_R << Footx_R(0)+Comx, Footy_R(0)+Comy, Footz_R(0);
-    Pfoot_L << Footx_L(0)+Comx, Footy_L(0)+Comy, Footz_L(0);    
+    ddXc = ddCx; ddYc = ddCy;    
+
+    localPf_LF << + Pfx_offset, + Pfy_offset + LatOut, Pfz_offset;
+    localPf_RF << + Pfx_offset, - Pfy_offset - LatOut, Pfz_offset;
+    localPf_LB << - Pfx_offset, + Pfy_offset + LatOut, Pfz_offset;
+    localPf_RB << - Pfx_offset, - Pfy_offset - LatOut, Pfz_offset;
+    localPf_LF = RotateYaw(Yaw)*localPf_LF;
+    localPf_RF = RotateYaw(Yaw)*localPf_RF;
+    localPf_LB = RotateYaw(Yaw)*localPf_LB;
+    localPf_RB = RotateYaw(Yaw)*localPf_RB;
+
+    Pfoot_LF << Footx_L(0) + localPf_LF(0)+Comx, Footy_L(0) + localPf_LF(1)+Comy, Footz_L(0) + localPf_LF(2);  
+    Pfoot_RF << Footx_R(0) + localPf_RF(0)+Comx, Footy_R(0) + localPf_RF(1)+Comy, Footz_R(0) + localPf_RF(2);  
+    Pfoot_LB << Footx_R(0) + localPf_LB(0)+Comx, Footy_R(0) + localPf_LB(1)+Comy, Footz_R(0) + localPf_LB(2);  
+    Pfoot_RB << Footx_L(0) + localPf_RB(0)+Comx, Footy_L(0) + localPf_RB(1)+Comy, Footz_L(0) + localPf_RB(2);  
 }

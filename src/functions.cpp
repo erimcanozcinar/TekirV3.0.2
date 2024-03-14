@@ -841,11 +841,8 @@ Eigen::Vector3d fullBodyIKan(Eigen::Vector3d Rfoot, Eigen::Vector3d Rcom, Eigen:
     Rcom2hip << L, W, H;
 
     // Euler Angles (torsoOrient: torso orinetatiın vector) (torsoOrient = [torsoRoll, torsoPitch, torsoYaw])
-    Eigen::Matrix3d torsoRollMatrix, torsoPitchMatrix, torsoYawMatrix, torsoRotation;
-    torsoRollMatrix = RotateRoll(torsoOrient(0));
-    torsoPitchMatrix = RotatePitch(torsoOrient(1));
-    torsoYawMatrix = RotateYaw(torsoOrient(2));
-    torsoRotation = torsoYawMatrix * torsoPitchMatrix * torsoRollMatrix;
+    Eigen::Matrix3d torsoRotation;
+    torsoRotation = RotateYaw(torsoOrient(2))*RotatePitch(torsoOrient(1))*RotateRoll(torsoOrient(0));
 
     // Rcom: CoM position vector
     // Rfoot: Foot position vector
