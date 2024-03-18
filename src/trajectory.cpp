@@ -531,9 +531,6 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
 
 void trajectory::trajGeneration(double RealTime, bool walkEnable, double command_Vx, double command_Vy, double command_dYaw, double height, double dt)
 {
-    Eigen::VectorXd outVals(13);
-    Eigen::Vector3d localPf_LF, localPf_RF, localPf_LB, localPf_RB;
-
     Yaw = numIntegral(command_dYaw, prev_command_dYaw, prev_Yaw, dt);
     prev_Yaw = Yaw;
 

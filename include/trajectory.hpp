@@ -49,7 +49,6 @@ class trajectory {
         double Cy, dCy, ddCy;
 
         double Comx, Comy;
-        Eigen::Vector3d comVel;
 
         double Strx = 0.0, Stry = 0.0;
 
@@ -68,7 +67,10 @@ class trajectory {
         double Yaw = 0.0, prev_Yaw = 0.0;
         double prev_command_dYaw = 0.0;
 
+        Eigen::Vector3d comVel;
 
+
+        Eigen::Vector3d localPf_LF, localPf_RF, localPf_LB, localPf_RB;
         Eigen::Vector3d Pfoot_LF, Pfoot_RF, Pfoot_LB, Pfoot_RB;
 
         void comTrajectory(double RealTime, double Ts, double Td, int Nphase, double px, double py, double vx_mean, double vy_mean, double Cz, double Fh, double dt);

@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
     /* #endregion */
 
     /* #region: Initialize Robot */
-    traj.trajGeneration(0, false, 0, 0, 0, initComZ, dt);
+    traj.trajGeneration(0.0, false, 0.0, 0.0, 0.0, initComZ, dt);
     Pcom << initComX, initComY, initComZ;
     torsoRot << initComRoll, initComPitch, initComYaw;
     Q_LF = fullBodyIKan(traj.Pfoot_LF, Pcom, torsoRot, 1);
@@ -323,7 +323,8 @@ int main(int argc, char** argv) {
         // std::cout << traj.ddYc << " microseconds" << std::endl;  
 
         /* Log data (fp0:NewtonEulerTorques, fp1:PD_torques, fp2: InvDynTorques ) */
-        fprintf(fp0, "%f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.Yc, traj.dXc, traj.dYc, traj.Pfoot_RF(0), traj.Pfoot_LF(0), traj.Yaw);
+        // fprintf(fp0, "%f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.Yc, traj.dXc, traj.dYc, traj.Pfoot_RF(0), traj.Pfoot_LF(0), traj.comVel(0));
+        fprintf(fp0, "%f %f %f %f %f %f %f %f\n", t, traj.Pfoot_RF(0), traj.Pfoot_RF(1), traj.Pfoot_RF(2), traj.Pfoot_LF(0), traj.Pfoot_LF(1), traj.Pfoot_LF(2), traj.Yaw);
         
     }
     server.killServer();
