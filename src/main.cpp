@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
     /* #endregion */
 
     /* #region: Initialize Robot */
-    traj.trajGeneration(0.0, false, 0.0, 0.0, 0.0, initComZ, dt);
+    traj.trajGeneration(0.0, false, 0.0, 0.0, 0.0, initComZ, 0.001);
     Pcom << initComX, initComY, initComZ;
     torsoRot << initComRoll, initComPitch, initComYaw;
     Q_LF = fullBodyIKan(traj.Pfoot_LF, Pcom, torsoRot, 1);
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
         traj.trajGeneration(t, jStick.walkEnable, cmd_Vx, cmd_Vy, cmd_dyaw, cmdJoyF[5], dt);
         /* #endregion */
         
-        /* #region: CONTACT DEFINITION START */
+        /* #region: CONTACT DEFINITION */
         for (auto& contact : quadruped->getContacts()) // LF:3, RF:2, LB:1, RB:0
         {
             if (contact.skip()) continue;
@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
         }
         /* #endregion */
 
-        /* #region: READ ACTUAL DATA START */
+        /* #region: READ ACTUAL DATA */
         genCoordinates = quadruped->getGeneralizedCoordinate().e();
         genVelocity = quadruped->getGeneralizedVelocity().e();
         for (int i = 0; i < 18; i++)
@@ -269,7 +269,7 @@ int main(int argc, char** argv) {
         /* #endregion */
         
         /* #region: INVERSE DYNAMICS */
-        jffTorques = funNewtonEuler4Leg(rootAbsacceleration, rootOrientation, rootAngvelocity, rootAngacceleration, jPositions, jVelocities, jAccelerations, rootOrientation.transpose()*F1cont, rootOrientation.transpose()*F2cont, rootOrientation.transpose()*F3cont, rootOrientation.transpose()*F4cont);
+        jffTorques = funNewtonEuler4Leg(rootAbsacceleration, rootOrientation, rootAngvelocity, rootAngacceleration, jPositions, jVelocities, jAccelerations, F1cont, F2cont, F3cont, F4cont);
         jffTorques2 = funNewtonEuler4Leg(rootAbsacceleration, rootOrientation, rootAngvelocity*0, rootAngacceleration, jPositions, jVelocities*0, jAccelerations, F1cont*0, F2cont*0, F3cont*0, F4cont*0);
         /* #endregion */
 
@@ -324,7 +324,8 @@ int main(int argc, char** argv) {
 
         /* Log data (fp0:NewtonEulerTorques, fp1:PD_torques, fp2: InvDynTorques ) */
         // fprintf(fp0, "%f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.Yc, traj.dXc, traj.dYc, traj.Pfoot_RF(0), traj.Pfoot_LF(0), traj.comVel(0));
-        fprintf(fp0, "%f %f %f %f %f %f %f %f\n", t, traj.Pfoot_RF(0), traj.Pfoot_RF(1), traj.Pfoot_RF(2), traj.Pfoot_LF(0), traj.Pfoot_LF(1), traj.Pfoot_LF(2), traj.Yaw);
+        // fprintf(fp0, "%f %f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.Footx_R(0), traj.Footy_R(0), traj.Footz_R(0), traj.Footx_L(0), traj.Footy_L(0), traj.Footz_L(0), traj.Yaw);
+        fprintf(fp0, "%f %f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.localStr_LF(0), traj.localStr_LF(1), traj.Footz_R(0), traj.Footx_L(0), traj.Footy_L(0), traj.Footz_L(0), traj.Yaw);
         
     }
     server.killServer();

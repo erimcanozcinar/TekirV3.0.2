@@ -427,16 +427,12 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
     /* #endregion: CoM Trajectory End */
 
     /* #region: Feet Trajectory Start */
-    double Velx_r, Accx_r, Velx_l, Accx_l;
-    double Vely_r, Accy_r, Vely_l, Accy_l;
-    double Velz_r, Accz_r, Velz_l, Accz_l;
     if (FuncInterval(RealTime, t0, t1, dt) == true) // Put robot on the ground
     {
         Footx_R.setZero(); Footy_R.setZero(); Footz_R.setZero();
-        Footx_L.setZero(); Footy_L.setZero(); Footz_L.setZero();
-        
+        Footx_L.setZero(); Footy_L.setZero(); Footz_L.setZero();        
     }
-    else if (FuncInterval(RealTime, t1, t2, dt) == true) // Z - axis Foot trajectory initialization(First half step)
+    else if (FuncInterval(RealTime, t1, t2, dt) == true) // Feet trajectory initialization(First half step)
     {
         Footx_R.setZero(); Footy_R.setZero(); Footz_R.setZero();
 
@@ -450,9 +446,9 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
 
         Footx_L << Strx/2, 0, 0;
         Footy_L << Stry/2, 0, 0;
-        Footz_L << 0, 0, 0;        
+        Footz_L << 0, 0, 0;
     }
-    else if (FuncInterval(RealTime, tstart_w, tend_w, dt) == true) // Z - axis Foot trajectory afater initialization
+    else if (FuncInterval(RealTime, tstart_w, tend_w, dt) == true) // Feet trajectory afater initialization
     {
         if (((k + 1) % 2) == 0) // Left foot swing, right foot stand
         {
@@ -529,6 +525,133 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
    
 }
 
+void trajectory::turnTrajectory(double RealTime, double Ts, double Td, int Nphase, double Fh, double dt)
+{
+    double t0 = 0.0; // Beginning of the Universe(or Simulation)
+    double t1 = t0 + 0; // Put robot on the ground
+    double t2 = t1 + Ts; // First half step
+    double tstart_w = t2 + Td; // Walking start
+    double tend_w = tstart_w + (Ts + Td) * Nphase; // Walking end
+    double t3 = tend_w + Ts; // CoM stoping phase
+
+    /* #region: Phase Calculation Start(Each Ts + Td is one phase) */
+    int k, kx;
+    double Rt4Fr = (RealTime - tstart_w) / (Ts + Td);
+    if (FuncInterval(RealTime, t0, tstart_w, dt) == true)
+    {
+        k = 0;
+        kx = 0;
+    }
+    else if (FuncGreater(RealTime, tend_w, dt) == true)
+    {
+        k = Nphase - 1;
+        kx = floor(k / 2);
+    }
+    else
+    {
+        k = floor(Rt4Fr);
+        kx = floor(Rt4Fr / 2);
+    }
+    /* #endregion: Phase Calculation Start(Each Ts + Td is one phase) */
+
+    /* #region: Feet Trajectory Start */
+    if (FuncInterval(RealTime, t0, t1, dt) == true) // Put robot on the ground
+    {
+        turnFootx_R.setZero(); turnFooty_R.setZero(); turnFootz_R.setZero();
+        turnFootx_L.setZero(); turnFooty_L.setZero(); turnFootz_L.setZero();        
+    }
+    else if (FuncInterval(RealTime, t1, t2, dt) == true) // Feet trajectory initialization(First half step)
+    {
+        turnFootx_R.setZero(); turnFooty_R.setZero(); turnFootz_R.setZero();
+
+        turnFootx_L = FuncPoly5th(RealTime, t1, t2, 0, 0, 0, Strx / 2, 0, 0);
+        turnFooty_L = FuncPoly5th(RealTime, t1, t2, 0, 0, 0, Stry / 2, 0, 0);
+        turnFootz_L = FuncPoly6th(RealTime, t1, t2, 0, 0, 0, 0, 0, 0, Fh);        
+    }
+    else if (FuncInterval(RealTime, t2, tstart_w, dt) == true)
+    {
+        turnFootx_R.setZero(); turnFooty_R.setZero(); turnFootz_R.setZero();
+
+        turnFootx_L << Strx/2, 0, 0;
+        turnFooty_L << Stry/2, 0, 0;
+        turnFootz_L << 0, 0, 0;
+    }
+    else if (FuncInterval(RealTime, tstart_w, tend_w, dt) == true) // Feet trajectory afater initialization
+    {
+        if (((k + 1) % 2) == 0) // Left foot swing, right foot stand
+        {
+            double ts = tstart_w + (Ts + Td) * k;
+            
+            turnFootx_L = FuncPoly5th(RealTime, ts, ts + Ts, Strx / 2 + Strx * kx, 0, 0, Strx / 2 + Strx * (kx + 1), 0, 0);
+            turnFooty_L = FuncPoly5th(RealTime, ts, ts + Ts, Stry / 2 + Stry * kx, 0, 0, Stry / 2 + Stry * (kx + 1), 0, 0);
+            turnFootz_L = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, Fh);
+
+            turnFootx_R = FuncPoly5th(RealTime, ts, ts + Ts, Strx * (kx + 1), 0, 0, Strx * (kx + 1), 0, 0);
+            turnFooty_R = FuncPoly5th(RealTime, ts, ts + Ts, Stry * (kx + 1), 0, 0, Stry * (kx + 1), 0, 0);
+            turnFootz_R = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, 0);
+        }
+        else // Right foot swing, left foot stand
+        {
+            double ts = tstart_w + (Ts + Td) * k;
+
+            turnFootx_L = FuncPoly5th(RealTime, ts, ts + Ts, Strx / 2 + Strx * kx, 0, 0, Strx / 2 + Strx * kx, 0, 0);
+            turnFooty_L = FuncPoly5th(RealTime, ts, ts + Ts, Stry / 2 + Stry * kx, 0, 0, Stry / 2 + Stry * kx, 0, 0);
+            turnFootz_L = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, 0);
+
+            turnFootx_R = FuncPoly5th(RealTime, ts, ts + Ts, Strx * kx, 0, 0, Strx * (kx + 1), 0, 0);
+            turnFooty_R = FuncPoly5th(RealTime, ts, ts + Ts, Stry * kx, 0, 0, Stry * (kx + 1), 0, 0);
+            turnFootz_R = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, Fh);
+        }
+    }
+    else if (FuncInterval(RealTime, tend_w, t3, dt) == true)
+    {
+        if (((k + 1) % 2) == 0)
+        {
+            turnFootx_R = FuncPoly5th(RealTime, tend_w, t3, Strx * (kx + 1), 0, 0, Strx / 2 + Strx * (kx + 1), 0, 0);
+            turnFooty_R = FuncPoly5th(RealTime, tend_w, t3, Stry * (kx + 1), 0, 0, Stry / 2 + Stry * (kx + 1), 0, 0);
+            turnFootz_R = FuncPoly6th(RealTime, tend_w, t3, 0, 0, 0, 0, 0, 0, Fh);
+
+            turnFootx_L << Strx/2 + Strx*(kx + 1), 0, 0;
+            turnFooty_L << Stry/2 + Stry*(kx + 1), 0, 0;
+            turnFooty_L << 0, 0, 0;
+        }
+        else
+        {
+            turnFootx_R << Strx*(kx + 1), 0, 0;
+            turnFooty_R << Stry*(kx + 1), 0, 0;
+            turnFootz_R << 0, 0, 0;
+
+            turnFootx_L = FuncPoly5th(RealTime, tend_w, t3, Strx / 2 + Strx * (kx), 0, 0, Strx + Strx * (kx), 0, 0);
+            turnFooty_L = FuncPoly5th(RealTime, tend_w, t3, Stry / 2 + Stry * (kx), 0, 0, Stry + Stry * (kx), 0, 0);
+            turnFootz_L = FuncPoly6th(RealTime, tend_w, t3, 0, 0, 0, 0, 0, 0, Fh);
+        }       
+    }
+    else
+    {
+        if (((k + 1) % 2) == 0)
+        {
+            turnFootx_R << Strx/2 + Strx*(kx + 1), 0, 0;
+            turnFooty_R << Stry/2 + Stry*(kx + 1), 0, 0;
+            turnFootz_R << 0, 0, 0;
+
+            turnFootx_L << Strx/2 + Strx*(kx + 1), 0, 0;
+            turnFooty_L << Stry/2 + Stry*(kx + 1), 0, 0;
+            turnFootz_L << 0, 0, 0;
+        }
+        else
+        {
+            turnFootx_R << Strx*(kx + 1), 0, 0;
+            turnFooty_R << Stry*(kx + 1), 0, 0;
+            turnFootz_R << 0, 0, 0;
+
+            turnFootx_L << Strx*(kx + 1), 0, 0;
+            turnFooty_L << Stry*(kx + 1), 0, 0;
+            turnFootz_L << 0, 0, 0;
+        }
+    }
+    /* #endregion: Feet Trajectory End */
+}
+
 void trajectory::trajGeneration(double RealTime, bool walkEnable, double command_Vx, double command_Vy, double command_dYaw, double height, double dt)
 {
     Yaw = numIntegral(command_dYaw, prev_command_dYaw, prev_Yaw, dt);
@@ -559,10 +682,12 @@ void trajectory::trajGeneration(double RealTime, bool walkEnable, double command
         Vy_mean = comVel(1);
     }
 
+
     if(prev_vx_mean != Vx_mean) Comx += Cx;
     if(prev_vy_mean != Vy_mean) Comy += Cy;
 
     if((prev_vx_mean != Vx_mean) || (prev_vy_mean != Vy_mean)){
+        if((Vx_mean > prev_vx_mean) && AreDoubleSame(prev_vx_mean,0.0)) w_start_time = RealTime;
         if(AreDoubleSame(Footz_R(0),Fc)){
             w_start_time = RealTime - Ts - Td - Ts/2.0;
             comTrajectory(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, height, Fc, dt);
@@ -585,6 +710,7 @@ void trajectory::trajGeneration(double RealTime, bool walkEnable, double command
     else if(!walk_enabled && can_stop){
         Nphase = 0;
     }
+
     
     comTrajectory(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, height, Fc, dt);
     Zc = height;
@@ -596,13 +722,17 @@ void trajectory::trajGeneration(double RealTime, bool walkEnable, double command
     localPf_RF << + Pfx_offset, - Pfy_offset - LatOut, Pfz_offset;
     localPf_LB << - Pfx_offset, + Pfy_offset + LatOut, Pfz_offset;
     localPf_RB << - Pfx_offset, - Pfy_offset - LatOut, Pfz_offset;
+    localStr_LF = RotateYaw(Yaw)*localPf_LF - localPf_LF; 
+    localStr_RF = RotateYaw(Yaw)*localPf_RF - localPf_RF; 
+    localStr_LB = RotateYaw(Yaw)*localPf_LB - localPf_LB; 
+    localStr_RB = RotateYaw(Yaw)*localPf_RB - localPf_RB; 
     localPf_LF = RotateYaw(Yaw)*localPf_LF;
     localPf_RF = RotateYaw(Yaw)*localPf_RF;
     localPf_LB = RotateYaw(Yaw)*localPf_LB;
     localPf_RB = RotateYaw(Yaw)*localPf_RB;
 
-    Pfoot_LF << Footx_L(0) + localPf_LF(0)+Comx, Footy_L(0) + localPf_LF(1)+Comy, Footz_L(0) + localPf_LF(2);  
-    Pfoot_RF << Footx_R(0) + localPf_RF(0)+Comx, Footy_R(0) + localPf_RF(1)+Comy, Footz_R(0) + localPf_RF(2);  
-    Pfoot_LB << Footx_R(0) + localPf_LB(0)+Comx, Footy_R(0) + localPf_LB(1)+Comy, Footz_R(0) + localPf_LB(2);  
-    Pfoot_RB << Footx_L(0) + localPf_RB(0)+Comx, Footy_L(0) + localPf_RB(1)+Comy, Footz_L(0) + localPf_RB(2);  
+    Pfoot_LF << Footx_L(0) + localPf_LF(0) + Comx, Footy_L(0) + localPf_LF(1) + Comy, Footz_L(0) + localPf_LF(2);  
+    Pfoot_RF << Footx_R(0) + localPf_RF(0) + Comx, Footy_R(0) + localPf_RF(1) + Comy, Footz_R(0) + localPf_RF(2);  
+    Pfoot_LB << Footx_R(0) + localPf_LB(0) + Comx, Footy_R(0) + localPf_LB(1) + Comy, Footz_R(0) + localPf_LB(2);  
+    Pfoot_RB << Footx_L(0) + localPf_RB(0) + Comx, Footy_L(0) + localPf_RB(1) + Comy, Footz_L(0) + localPf_RB(2);  
 }

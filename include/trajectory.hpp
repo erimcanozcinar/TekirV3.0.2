@@ -59,6 +59,7 @@ class trajectory {
         double Xcop, Ycop;
 
         Eigen::Vector3d Footz_L, Footz_R, Footx_L, Footx_R, Footy_L, Footy_R;
+        Eigen::Vector3d turnFootz_L, turnFootz_R, turnFootx_L, turnFootx_R, turnFooty_L, turnFooty_R;
 
         double Zc = 0.53319176863337994221048177223565;
         double Xc = 0.0, Yc = 0.0;
@@ -70,10 +71,12 @@ class trajectory {
         Eigen::Vector3d comVel;
 
 
+        Eigen::Vector3d localStr_LF, localStr_RF, localStr_LB, localStr_RB;
         Eigen::Vector3d localPf_LF, localPf_RF, localPf_LB, localPf_RB;
         Eigen::Vector3d Pfoot_LF, Pfoot_RF, Pfoot_LB, Pfoot_RB;
 
         void comTrajectory(double RealTime, double Ts, double Td, int Nphase, double px, double py, double vx_mean, double vy_mean, double Cz, double Fh, double dt);
+        void turnTrajectory(double RealTime, double Ts, double Td, int Nphase, double Fh, double dt);
         void trajGeneration(double RealTime, bool walkEnable, double command_Vx, double command_Vy, double command_Yaw, double height, double dt);
 };
 
