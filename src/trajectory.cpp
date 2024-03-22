@@ -450,10 +450,10 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
     }
     else if (FuncInterval(RealTime, tstart_w, tend_w, dt) == true) // Feet trajectory afater initialization
     {
+        double ts = tstart_w + (Ts + Td) * k;
         if (((k + 1) % 2) == 0) // Left foot swing, right foot stand
         {
-            double ts = tstart_w + (Ts + Td) * k;
-            
+            // std::cout << RealTime - ts << std::endl;
             Footx_L = FuncPoly5th(RealTime, ts, ts + Ts, Strx / 2 + Strx * kx, 0, 0, Strx / 2 + Strx * (kx + 1), 0, 0);
             Footy_L = FuncPoly5th(RealTime, ts, ts + Ts, Stry / 2 + Stry * kx, 0, 0, Stry / 2 + Stry * (kx + 1), 0, 0);
             Footz_L = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, Fh);
@@ -464,8 +464,6 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
         }
         else // Right foot swing, left foot stand
         {
-            double ts = tstart_w + (Ts + Td) * k;
-
             Footx_L = FuncPoly5th(RealTime, ts, ts + Ts, Strx / 2 + Strx * kx, 0, 0, Strx / 2 + Strx * kx, 0, 0);
             Footy_L = FuncPoly5th(RealTime, ts, ts + Ts, Stry / 2 + Stry * kx, 0, 0, Stry / 2 + Stry * kx, 0, 0);
             Footz_L = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, 0);
@@ -474,6 +472,7 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
             Footy_R = FuncPoly5th(RealTime, ts, ts + Ts, Stry * kx, 0, 0, Stry * (kx + 1), 0, 0);
             Footz_R = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, Fh);
         }
+
     }
     else if (FuncInterval(RealTime, tend_w, t3, dt) == true)
     {
@@ -659,7 +658,6 @@ void trajectory::trajGeneration(double RealTime, bool walkEnable, double command
 
     comVel << command_Vx, command_Vy, 0;
     comVel = RotateYaw(Yaw)*comVel;
-
     
 
     if(!walk_enabled && walkEnable) w_start_time = RealTime;
@@ -671,13 +669,14 @@ void trajectory::trajGeneration(double RealTime, bool walkEnable, double command
         can_switch = false;
     }
 
+
     if(abs(Vx_mean) > 0 || abs(Vy_mean) > 0){
         can_stop = false;
     } else {
         can_stop = (AreDoubleSame(Footz_R(0),0)) && (AreDoubleSame(Footz_L(0),0));
     }
 
-    if(can_switch && walk_enabled){        
+    if(can_switch && walk_enabled){
         Vx_mean = comVel(0); 
         Vy_mean = comVel(1);
     }
@@ -722,14 +721,11 @@ void trajectory::trajGeneration(double RealTime, bool walkEnable, double command
     localPf_RF << + Pfx_offset, - Pfy_offset - LatOut, Pfz_offset;
     localPf_LB << - Pfx_offset, + Pfy_offset + LatOut, Pfz_offset;
     localPf_RB << - Pfx_offset, - Pfy_offset - LatOut, Pfz_offset;
-    localStr_LF = RotateYaw(Yaw)*localPf_LF - localPf_LF; 
-    localStr_RF = RotateYaw(Yaw)*localPf_RF - localPf_RF; 
-    localStr_LB = RotateYaw(Yaw)*localPf_LB - localPf_LB; 
-    localStr_RB = RotateYaw(Yaw)*localPf_RB - localPf_RB; 
     localPf_LF = RotateYaw(Yaw)*localPf_LF;
+    localPf_RB = RotateYaw(Yaw)*localPf_RB;
     localPf_RF = RotateYaw(Yaw)*localPf_RF;
     localPf_LB = RotateYaw(Yaw)*localPf_LB;
-    localPf_RB = RotateYaw(Yaw)*localPf_RB;
+    
 
     Pfoot_LF << Footx_L(0) + localPf_LF(0) + Comx, Footy_L(0) + localPf_LF(1) + Comy, Footz_L(0) + localPf_LF(2);  
     Pfoot_RF << Footx_R(0) + localPf_RF(0) + Comx, Footy_R(0) + localPf_RF(1) + Comy, Footz_R(0) + localPf_RF(2);  
