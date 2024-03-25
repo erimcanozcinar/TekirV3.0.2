@@ -72,7 +72,7 @@ class trajectory {
 
 
         Eigen::Vector3d localStr_LF, localStr_RF, localStr_LB, localStr_RB;
-        Eigen::Vector3d localPf_LF, localPf_RF, localPf_LB, localPf_RB;
+        Eigen::Vector3d offsetPf_LF, offsetPf_RF, offsetPf_LB, offsetPf_RB;
         Eigen::Vector3d Pfoot_LF, Pfoot_RF, Pfoot_LB, Pfoot_RB;
 
         void comTrajectory(double RealTime, double Ts, double Td, int Nphase, double px, double py, double vx_mean, double vy_mean, double Cz, double Fh, double dt);

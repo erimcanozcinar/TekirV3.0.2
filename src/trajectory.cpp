@@ -309,7 +309,10 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
     double w = sqrt(g / Cz); // Natural freq of equivalent pendulum
 
     Eigen::Vector3d trajComX, trajComY;
-    Eigen::VectorXd returnVals(16);    
+    Eigen::VectorXd returnVals(16);
+
+    comVel << vx_mean, vy_mean, 0;
+    comVel = RotateYaw(Yaw)*comVel;   
 
     /* #region: Phase Calculation Start(Each Ts + Td is one phase) */
     int k, kx;
@@ -332,7 +335,7 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
     /* #endregion: Phase Calculation Start(Each Ts + Td is one phase) */
         
     /* #region: Xcom parameters */
-    double Cxd = (px + vx_mean * Ts / 2);
+    double Cxd = (px + comVel(0) * Ts / 2);
     double Cx0 = (2 * px - Cxd);
     double dCx0 = w * (px - Cx0) * 1 / tanh(w * Ts / 2);
     double ddCx0 = w * w * (Cx0 - px);
@@ -345,7 +348,7 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
     /* #endregion: Xcom parameters */
 
     /* #region: Ycom parameters */
-    double Cyd = (py + vy_mean * Ts / 2);
+    double Cyd = (py + comVel(1) * Ts / 2);
     double Cy0 = (2 * py - Cyd);
     double dCy0 = w * (py - Cy0) * 1 / tanh(w * Ts / 2);
     double ddCy0 = w * w * (Cy0 - py);
@@ -655,9 +658,6 @@ void trajectory::trajGeneration(double RealTime, bool walkEnable, double command
 {
     Yaw = numIntegral(command_dYaw, prev_command_dYaw, prev_Yaw, dt);
     prev_Yaw = Yaw;
-
-    comVel << command_Vx, command_Vy, 0;
-    comVel = RotateYaw(Yaw)*comVel;
     
 
     if(!walk_enabled && walkEnable) w_start_time = RealTime;
@@ -677,8 +677,8 @@ void trajectory::trajGeneration(double RealTime, bool walkEnable, double command
     }
 
     if(can_switch && walk_enabled){
-        Vx_mean = comVel(0); 
-        Vy_mean = comVel(1);
+        Vx_mean = command_Vx; 
+        Vy_mean = command_Vy;
     }
 
 
@@ -717,18 +717,18 @@ void trajectory::trajGeneration(double RealTime, bool walkEnable, double command
     dXc = dCx; dYc = dCy; 
     ddXc = ddCx; ddYc = ddCy;    
 
-    localPf_LF << + Pfx_offset, + Pfy_offset + LatOut, Pfz_offset;
-    localPf_RF << + Pfx_offset, - Pfy_offset - LatOut, Pfz_offset;
-    localPf_LB << - Pfx_offset, + Pfy_offset + LatOut, Pfz_offset;
-    localPf_RB << - Pfx_offset, - Pfy_offset - LatOut, Pfz_offset;
-    localPf_LF = RotateYaw(Yaw)*localPf_LF;
-    localPf_RB = RotateYaw(Yaw)*localPf_RB;
-    localPf_RF = RotateYaw(Yaw)*localPf_RF;
-    localPf_LB = RotateYaw(Yaw)*localPf_LB;
+    offsetPf_LF << + Pfx_offset, + Pfy_offset + LatOut, Pfz_offset;
+    offsetPf_RF << + Pfx_offset, - Pfy_offset - LatOut, Pfz_offset;
+    offsetPf_LB << - Pfx_offset, + Pfy_offset + LatOut, Pfz_offset;
+    offsetPf_RB << - Pfx_offset, - Pfy_offset - LatOut, Pfz_offset;
+    offsetPf_LF = RotateYaw(Yaw)*offsetPf_LF;
+    offsetPf_RB = RotateYaw(Yaw)*offsetPf_RB;
+    offsetPf_RF = RotateYaw(Yaw)*offsetPf_RF;
+    offsetPf_LB = RotateYaw(Yaw)*offsetPf_LB;
     
 
-    Pfoot_LF << Footx_L(0) + localPf_LF(0) + Comx, Footy_L(0) + localPf_LF(1) + Comy, Footz_L(0) + localPf_LF(2);  
-    Pfoot_RF << Footx_R(0) + localPf_RF(0) + Comx, Footy_R(0) + localPf_RF(1) + Comy, Footz_R(0) + localPf_RF(2);  
-    Pfoot_LB << Footx_R(0) + localPf_LB(0) + Comx, Footy_R(0) + localPf_LB(1) + Comy, Footz_R(0) + localPf_LB(2);  
-    Pfoot_RB << Footx_L(0) + localPf_RB(0) + Comx, Footy_L(0) + localPf_RB(1) + Comy, Footz_L(0) + localPf_RB(2);  
+    Pfoot_LF << Footx_L(0) + offsetPf_LF(0) + Comx, Footy_L(0) + offsetPf_LF(1) + Comy, Footz_L(0) + offsetPf_LF(2);  
+    Pfoot_RF << Footx_R(0) + offsetPf_RF(0) + Comx, Footy_R(0) + offsetPf_RF(1) + Comy, Footz_R(0) + offsetPf_RF(2);  
+    Pfoot_LB << Footx_R(0) + offsetPf_LB(0) + Comx, Footy_R(0) + offsetPf_LB(1) + Comy, Footz_R(0) + offsetPf_LB(2);  
+    Pfoot_RB << Footx_L(0) + offsetPf_RB(0) + Comx, Footy_L(0) + offsetPf_RB(1) + Comy, Footz_L(0) + offsetPf_RB(2);  
 }
