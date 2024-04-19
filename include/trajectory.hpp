@@ -47,10 +47,14 @@ class trajectory {
 
         double Cx, dCx, ddCx;
         double Cy, dCy, ddCy;
+        double Cyaw, dCyaw, ddCyaw;
 
         double Comx, Comy;
 
         double Strx = 0.0, Stry = 0.0;
+
+        Eigen::Vector3d Pstart_LF, Pstart_RF, Pstart_LB, Pstart_RB;
+        Eigen::Vector3d Pend_LF, Pend_RF, Pend_LB, Pend_RB;
 
         double Pfx_offset = 0.36634099999999997221422631810128, Pfy_offset = 0.2414, Pfz_offset = 0;
         double LatOut = 0.0;
@@ -58,24 +62,30 @@ class trajectory {
     public:
         double Xcop, Ycop;
 
-        Eigen::Vector3d Footz_L, Footz_R, Footx_L, Footx_R, Footy_L, Footy_R;
+        Eigen::Vector3d Footx_LF, Footx_RF, Footx_LB, Footx_RB;
+        Eigen::Vector3d Footy_LF, Footy_RF, Footy_LB, Footy_RB;
+        Eigen::Vector3d Footz_LF, Footz_RF, Footz_LB, Footz_RB;
         Eigen::Vector3d turnFootz_L, turnFootz_R, turnFootx_L, turnFootx_R, turnFooty_L, turnFooty_R;
 
         double Zc = 0.53319176863337994221048177223565;
         double Xc = 0.0, Yc = 0.0;
         double dXc = 0.0, dYc = 0.0;
         double ddXc = 0.0, ddYc = 0.0;
-        double Yaw = 0.0, prev_Yaw = 0.0;
-        double prev_command_dYaw = 0.0;
+        double Yawc = 0.0, Yaw_mean = 0.0;
+        double trajYaw = 0.0;
+        double prev_Yaw_mean = 0.0;
 
         Eigen::Vector3d comVel;
 
+        double ComYaw;
 
-        Eigen::Vector3d localStr_LF, localStr_RF, localStr_LB, localStr_RB;
+        Eigen::Vector3d aa_LF, aa_RF, aa_LB, aa_RB;
+        Eigen::Vector3d yawStr_LF, yawStr_RF, yawStr_LB, yawStr_RB;
+        Eigen::Vector3d pre_yawStr_LF, pre_yawStr_RF, pre_yawStr_LB, pre_yawStr_RB;
         Eigen::Vector3d offsetPf_LF, offsetPf_RF, offsetPf_LB, offsetPf_RB;
         Eigen::Vector3d Pfoot_LF, Pfoot_RF, Pfoot_LB, Pfoot_RB;
 
-        void comTrajectory(double RealTime, double Ts, double Td, int Nphase, double px, double py, double vx_mean, double vy_mean, double Cz, double Fh, double dt);
+        void comTrajectory(double RealTime, double Ts, double Td, int Nphase, double px, double py, double vx_mean, double vy_mean, double yaw, double Cz, double Fh, double dt);
         void turnTrajectory(double RealTime, double Ts, double Td, int Nphase, double Fh, double dt);
         void trajGeneration(double RealTime, bool walkEnable, double command_Vx, double command_Vy, double command_Yaw, double height, double dt);
 };

@@ -830,11 +830,6 @@ Eigen::Vector3d fullBodyIKan(Eigen::Vector3d Rfoot, Eigen::Vector3d Rcom, Eigen:
     double d4 = -0.224282;
     double d5 = -0.107131; //-0.107131;
 
-    //double L = 0.558 * m; // Length of torso
-    //double W = 0.436 * n; // Width of torso
-    //double dy_hip = 0.098 * n; // Hip AA joint position wrt left side of robot
-    //double dx_hip = 0.022 * m; // Hip AA joint position wrt front side of robot
-
     // Hip AA position wrt CoM
     Eigen::Vector3d Rcom2hip;
     //Rcom2hip << L / 2 + dx_hip, W / 2 - dy_hip, 0;
@@ -842,6 +837,9 @@ Eigen::Vector3d fullBodyIKan(Eigen::Vector3d Rfoot, Eigen::Vector3d Rcom, Eigen:
 
     // Euler Angles (torsoOrient: torso orinetatiın vector) (torsoOrient = [torsoRoll, torsoPitch, torsoYaw])
     Eigen::Matrix3d torsoRotation;
+    // Eigen::Vector4d quat;
+    // quat = eulerToQuaternion(torsoOrient(2),torsoOrient(1),torsoOrient(0));
+    // torsoRotation = quat2Rotmat(quat(0),quat(1),quat(2),quat(3));
     torsoRotation = RotateYaw(torsoOrient(2))*RotatePitch(torsoOrient(1))*RotateRoll(torsoOrient(0));
 
     // Rcom: CoM position vector

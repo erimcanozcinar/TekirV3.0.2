@@ -96,8 +96,8 @@ int main(int argc, char** argv) {
             pre_cmdJoyF[i] = cmdJoyF[i];
         }
         cmd_Vx = jStick.joyCmd[0]; cmd_Vy = jStick.joyCmd[1];
-        cmd_dyaw = jStick.joyCmd[2];  cmd_pitch = cmdJoyF[3]; cmd_roll = cmdJoyF[4];
-        traj.trajGeneration(t, jStick.walkEnable, cmd_Vx, cmd_Vy, cmd_dyaw, cmdJoyF[5], dt);
+        cmd_yaw = jStick.joyCmd[2];  cmd_pitch = cmdJoyF[3]; cmd_roll = cmdJoyF[4];
+        traj.trajGeneration(t, jStick.walkEnable, cmd_Vx, cmd_Vy, cmd_yaw, cmdJoyF[5], dt);
         /* #endregion */
         
         /* #region: CONTACT DEFINITION */
@@ -207,7 +207,7 @@ int main(int argc, char** argv) {
         /* #region: DESIRED COM POSITION & ORIENTATION */
         Pcom << traj.Xc, traj.Yc, traj.Zc;
         Rcom << genCoordinates(0), genCoordinates(1), genCoordinates(2);
-        torsoRot << cmd_roll, cmd_pitch, traj.Yaw; // Torso Orientation
+        torsoRot << cmd_roll, cmd_pitch, traj.Yawc/2; // Torso Orientation
         /* #endregion */
 
         /* #region: ANALYTIC INVERSE KINEMATIC */
@@ -258,14 +258,15 @@ int main(int argc, char** argv) {
         Fvmc << (traj.ddXc + (traj.ddXc-genAcceleration(0))*10 + (traj.dXc - genVelocity(0))*1), (traj.ddYc + (traj.ddYc-genAcceleration(1))*10 + (traj.dYc - genVelocity(1))*1), (MASS*GRAVITY + (ddZcom-genAcceleration(2))*0 + (0 - genVelocity(2))*0), Mvmc(0), Mvmc(1), Mvmc(2);
         Fmatrix = VMC(Rf_LF, Rf_RF, Rf_LB, Rf_RB, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
         // Fmatrix = VMC(traj.Pfoot_LF-Pcom, traj.Pfoot_RF-Pcom, Rf_LB, Rf_RB, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
+        // Fmatrix = refForceCalc4(traj.Pfoot_LF-Pcom, traj.Pfoot_RF-Pcom, traj.Pfoot_LB-Pcom, traj.Pfoot_RB-Pcom,Q_LF,Q_RF,Q_LB,Q_RB,dt);
         F1cont << Fmatrix(0, 0), Fmatrix(0, 1), Fmatrix(0, 2);
         F2cont << Fmatrix(1, 0), Fmatrix(1, 1), Fmatrix(1, 2);
         F3cont << Fmatrix(2, 0), Fmatrix(2, 1), Fmatrix(2, 2);
         F4cont << Fmatrix(3, 0), Fmatrix(3, 1), Fmatrix(3, 2);
-        // F1cont = rootOrientation.transpose()*F1cont;
-        // F2cont = rootOrientation.transpose()*F2cont;
-        // F3cont = rootOrientation.transpose()*F3cont;
-        // F4cont = rootOrientation.transpose()*F4cont;
+        // F1cont = rootOrientation*F1cont;
+        // F2cont = rootOrientation*F2cont;
+        // F3cont = rootOrientation*F3cont;
+        // F4cont = rootOrientation*F4cont;
         /* #endregion */
         
         /* #region: INVERSE DYNAMICS */
@@ -323,7 +324,7 @@ int main(int argc, char** argv) {
         // std::cout << traj.ddYc << " microseconds" << std::endl;  
 
         /* Log data (fp0:NewtonEulerTorques, fp1:PD_torques, fp2: InvDynTorques ) */
-        fprintf(fp0, "%f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.Pfoot_RF(0)-traj.Xc, traj.Pfoot_RF(2), traj.dYc, traj.Pfoot_LF(0)-traj.Xc, traj.Pfoot_LF(2), traj.Yaw);
+        fprintf(fp0, "%f %f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.Pfoot_RF(0), traj.Pfoot_RF(2), traj.Pfoot_LF(0), traj.Pfoot_LF(2), traj.Yawc/2, traj.ComYaw/2, traj.aa_LF(0));
         // fprintf(fp0, "%f %f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.Footx_R(0), traj.Footy_R(0), traj.Footz_R(0), traj.Footx_L(0), traj.Footy_L(0), traj.Footz_L(0), traj.Yaw);
         // fprintf(fp0, "%f %f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.localStr_LF(0), traj.localStr_LF(1), traj.Footz_R(0), traj.Footx_L(0), traj.Footy_L(0), traj.Footz_L(0), traj.Yaw);
         
