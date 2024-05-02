@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
     /* #endregion */
 
     /* #region: Initialize Robot */
-    traj.trajGeneration(0.0, false, 0.0, 0.0, 0.0, initComZ, 0.001);
+    traj.trajGeneration(0.0, false, 0.0, 0.0, 0, initComZ, 0.001);
     Pcom << initComX, initComY, initComZ;
     torsoRot << initComRoll, initComPitch, initComYaw;
     Q_LF = fullBodyIKan(traj.Pfoot_LF, Pcom, torsoRot, 1);
@@ -96,7 +96,9 @@ int main(int argc, char** argv) {
             pre_cmdJoyF[i] = cmdJoyF[i];
         }
         cmd_Vx = jStick.joyCmd[0]; cmd_Vy = jStick.joyCmd[1];
-        cmd_yaw = jStick.joyCmd[2];  cmd_pitch = cmdJoyF[3]; cmd_roll = cmdJoyF[4];
+        if(jStick.walkEnable) { cmd_yaw = jStick.joyCmd[2]; }
+        else { cmd_yaw = cmdJoyF[2]; }
+        cmd_pitch = cmdJoyF[3]; cmd_roll = cmdJoyF[4];
         traj.trajGeneration(t, jStick.walkEnable, cmd_Vx, cmd_Vy, cmd_yaw, cmdJoyF[5], dt);
         /* #endregion */
         
@@ -207,7 +209,7 @@ int main(int argc, char** argv) {
         /* #region: DESIRED COM POSITION & ORIENTATION */
         Pcom << traj.Xc, traj.Yc, traj.Zc;
         Rcom << genCoordinates(0), genCoordinates(1), genCoordinates(2);
-        torsoRot << cmd_roll, cmd_pitch, traj.Yawc/2; // Torso Orientation
+        torsoRot << cmd_roll, cmd_pitch, traj.Yawc; // Torso Orientation
         /* #endregion */
 
         /* #region: ANALYTIC INVERSE KINEMATIC */
@@ -236,10 +238,10 @@ int main(int argc, char** argv) {
         /* #endregion */
 
         /* #region: VMC CONTROLLER FOR TORSO */
-        Rf_LF = fullBodyFK(imuRot, {0,0,0}, q_LF, 1);
-        Rf_RF = fullBodyFK(imuRot, {0,0,0}, q_RF, 2);
-        Rf_LB = fullBodyFK(imuRot, {0,0,0}, q_LB, 3);
-        Rf_RB = fullBodyFK(imuRot, {0,0,0}, q_RB, 4);
+        Rf_LF = fullBodyFK(torsoRot, {0,0,0}, q_LF, 1);
+        Rf_RF = fullBodyFK(torsoRot, {0,0,0}, q_RF, 2);
+        Rf_LB = fullBodyFK(torsoRot, {0,0,0}, q_LB, 3);
+        Rf_RB = fullBodyFK(torsoRot, {0,0,0}, q_RB, 4);
 
         dtorsoRot << Numdiff(torsoRot(0), prev_torsoRot(0), dt), Numdiff(torsoRot(1), prev_torsoRot(1), dt), Numdiff(torsoRot(2), prev_torsoRot(2), dt);
         ddtorsoRot << Numdiff(dtorsoRot(0), prev_dtorsoRot(0), dt), Numdiff(dtorsoRot(1), prev_dtorsoRot(1), dt), Numdiff(dtorsoRot(2), prev_dtorsoRot(2), dt);
@@ -255,7 +257,7 @@ int main(int argc, char** argv) {
 
         Mvmc = Itorso*(dWref + sqrt(150)*(Wref - rootAngvelocity) - 150*(orientControlRef(0)*quatVec - genCoordinates(3)*quatVecRef + vec2SkewSym(quatVecRef)*quatVec));
 
-        Fvmc << (traj.ddXc + (traj.ddXc-genAcceleration(0))*10 + (traj.dXc - genVelocity(0))*1), (traj.ddYc + (traj.ddYc-genAcceleration(1))*10 + (traj.dYc - genVelocity(1))*1), (MASS*GRAVITY + (ddZcom-genAcceleration(2))*0 + (0 - genVelocity(2))*0), Mvmc(0), Mvmc(1), Mvmc(2);
+        Fvmc << (traj.ddXc + (traj.ddXc-genAcceleration(0))*10 + (traj.dXc - genVelocity(0))*1), (traj.ddYc + (traj.ddYc-genAcceleration(1))*10 + (traj.dYc - genVelocity(1))*1), (MASS*GRAVITY + (ddZcom-genAcceleration(2))*0 + (0 - genVelocity(2))*0), 0*Mvmc(0), 0*Mvmc(1), 0*Mvmc(2);
         Fmatrix = VMC(Rf_LF, Rf_RF, Rf_LB, Rf_RB, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
         // Fmatrix = VMC(traj.Pfoot_LF-Pcom, traj.Pfoot_RF-Pcom, Rf_LB, Rf_RB, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
         // Fmatrix = refForceCalc4(traj.Pfoot_LF-Pcom, traj.Pfoot_RF-Pcom, traj.Pfoot_LB-Pcom, traj.Pfoot_RB-Pcom,Q_LF,Q_RF,Q_LB,Q_RB,dt);
@@ -263,10 +265,6 @@ int main(int argc, char** argv) {
         F2cont << Fmatrix(1, 0), Fmatrix(1, 1), Fmatrix(1, 2);
         F3cont << Fmatrix(2, 0), Fmatrix(2, 1), Fmatrix(2, 2);
         F4cont << Fmatrix(3, 0), Fmatrix(3, 1), Fmatrix(3, 2);
-        // F1cont = rootOrientation*F1cont;
-        // F2cont = rootOrientation*F2cont;
-        // F3cont = rootOrientation*F3cont;
-        // F4cont = rootOrientation*F4cont;
         /* #endregion */
         
         /* #region: INVERSE DYNAMICS */

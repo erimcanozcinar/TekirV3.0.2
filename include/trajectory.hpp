@@ -77,7 +77,7 @@ class trajectory {
 
         Eigen::Vector3d comVel;
 
-        double ComYaw;
+        double ComYaw, Yawc2;
 
         Eigen::Vector3d aa_LF, aa_RF, aa_LB, aa_RB;
         Eigen::Vector3d yawStr_LF, yawStr_RF, yawStr_LB, yawStr_RB;
@@ -86,7 +86,6 @@ class trajectory {
         Eigen::Vector3d Pfoot_LF, Pfoot_RF, Pfoot_LB, Pfoot_RB;
 
         void comTrajectory(double RealTime, double Ts, double Td, int Nphase, double px, double py, double vx_mean, double vy_mean, double yaw, double Cz, double Fh, double dt);
-        void turnTrajectory(double RealTime, double Ts, double Td, int Nphase, double Fh, double dt);
         void trajGeneration(double RealTime, bool walkEnable, double command_Vx, double command_Vy, double command_Yaw, double height, double dt);
 };
 

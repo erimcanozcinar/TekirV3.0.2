@@ -22,6 +22,7 @@ Eigen::VectorXd initialConditions(19), genCoordinates(19);
 Eigen::VectorXd F(18), genVelocity(18), genAcceleration(18), genAccelerationVec(18), prevgenVelocity(18);
 Eigen::Vector3d Pf_LF, Pf_RF, Pf_LB, Pf_RB; 
 Eigen::Vector3d Pcom, torsoRot, dtorsoRot, prev_torsoRot, ddtorsoRot, prev_dtorsoRot, imuRot, prev_imuRot, dimuRot;
+Eigen::Vector3d torsoRot2, dtorsoRot2, prev_torsoRot2, ddtorsoRot2, prev_dtorsoRot2;
 
 Eigen::Vector3d Rf_LF, Rf_RF, Rf_LB, Rf_RB;
 Eigen::Vector3d Q_LF, Q_RF, Q_LB, Q_RB, prevQ_LF, prevQ_RF, prevQ_LB, prevQ_RB, dQ_LF, dQ_RF, dQ_LB, dQ_RB;
