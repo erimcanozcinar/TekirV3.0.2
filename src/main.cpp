@@ -258,6 +258,7 @@ int main(int argc, char** argv) {
         Mvmc = Itorso*(dWref + sqrt(150)*(Wref - rootAngvelocity) - 150*(orientControlRef(0)*quatVec - genCoordinates(3)*quatVecRef + vec2SkewSym(quatVecRef)*quatVec));
 
         Fvmc << (traj.ddXc + (traj.ddXc-genAcceleration(0))*10 + (traj.dXc - genVelocity(0))*1), (traj.ddYc + (traj.ddYc-genAcceleration(1))*10 + (traj.dYc - genVelocity(1))*1), (MASS*GRAVITY + (ddZcom-genAcceleration(2))*0 + (0 - genVelocity(2))*0), 0*Mvmc(0), 0*Mvmc(1), 0*Mvmc(2);
+        Fvmc << 0, 0, MASS*GRAVITY, Mvmc(0), Mvmc(1), 0;
         Fmatrix = VMC(Rf_LF, Rf_RF, Rf_LB, Rf_RB, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
         // Fmatrix = VMC(traj.Pfoot_LF-Pcom, traj.Pfoot_RF-Pcom, Rf_LB, Rf_RB, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
         // Fmatrix = refForceCalc4(traj.Pfoot_LF-Pcom, traj.Pfoot_RF-Pcom, traj.Pfoot_LB-Pcom, traj.Pfoot_RB-Pcom,Q_LF,Q_RF,Q_LB,Q_RB,dt);
