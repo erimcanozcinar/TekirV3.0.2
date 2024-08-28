@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- All knees looks insde -->
+<!-- All knees looks in the same direction -->
 <robot name="tekirV3">
 
   <material name="black">
@@ -250,7 +250,7 @@
      <inertia ixx="0.002"  ixy="-7.048e-7"  ixz="-2.682e-4" iyy="0.002" iyz="-1.088e-5" izz="1.086e-4" />
     </inertial>
 	  <visual>
-     <origin xyz="0 0 0" rpy="0 0 -1.57079632679" />
+     <origin xyz="0 0 0" rpy="0 0 1.57079632679" />
      <geometry>
        <mesh filename="../mesh/shank.stl" scale="0.001 0.001 0.001"/>
      </geometry>
@@ -271,7 +271,7 @@
      <inertia ixx="0.002"  ixy="-7.048e-7"  ixz="-2.682e-4" iyy="0.002" iyz="-1.088e-5" izz="1.086e-4" />
     </inertial>
 	  <visual>
-     <origin xyz="0 0 0" rpy="0 0 -1.57079632679" />
+     <origin xyz="0 0 0" rpy="0 0 1.57079632679" />
      <geometry>
        <mesh filename="../mesh/shank.stl" scale="0.001 0.001 0.001"/>
      </geometry>
@@ -497,14 +497,14 @@
     <parent link="shank_lb"/>
     <child link="Foot_lb"/>
     <axis xyz="0 0 0"/>
-    <origin xyz="0 0 -0.224282" rpy="0 -0.52359877559 0"/>
+    <origin xyz="0 0 -0.224282" rpy="0 0.52359877559 0"/>
   </joint>
   
   <joint name="footFrame_rb" type="fixed">
     <parent link="shank_rb"/>
     <child link="Foot_rb"/>
     <axis xyz="0 0 0"/>
-    <origin xyz="0 0 -0.224282" rpy="0 -0.52359877559 0"/>
+    <origin xyz="0 0 -0.224282" rpy="0 0.52359877559 0"/>
   </joint>
 
 </robot>

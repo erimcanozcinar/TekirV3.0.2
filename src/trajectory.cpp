@@ -340,7 +340,7 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
     double d_dCx0 = dCx0;
 
     double Kx = d_dCx0 + w * (Cxd - px) * 1 / tanh(w * Td / 2);
-    Strx = 2 * Td * Kx;
+    Strx = 2 * Td * Kx;    
     double Cxd0 = Cx0 + Strx / 2;
     /* #endregion: Xcom parameters */
 
@@ -358,10 +358,10 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
     /* #endregion: Ycom parameters */
     
     /* #region: Yaw */
-    offsetPf_LF << + Pfx_offset, + Pfy_offset + LatOut, Pfz_offset;
-    offsetPf_RF << + Pfx_offset, - Pfy_offset - LatOut, Pfz_offset;
-    offsetPf_LB << - Pfx_offset, + Pfy_offset + LatOut, Pfz_offset;
-    offsetPf_RB << - Pfx_offset, - Pfy_offset - LatOut, Pfz_offset;
+    offsetPf_LF << + Pfx_offset_fr, + Pfy_offset + LatOut, Pfz_offset;
+    offsetPf_RF << + Pfx_offset_fr, - Pfy_offset - LatOut, Pfz_offset;
+    offsetPf_LB << - Pfx_offset_bc, + Pfy_offset + LatOut, Pfz_offset;
+    offsetPf_RB << - Pfx_offset_bc, - Pfy_offset - LatOut, Pfz_offset;
     yawStr_LF = (RotateYaw(yaw*(kx+1))*offsetPf_LF - offsetPf_LF);
     yawStr_RF = (RotateYaw(yaw*(kx+1))*offsetPf_RF - offsetPf_RF);
     yawStr_LB = (RotateYaw(yaw*(kx+1))*offsetPf_LB - offsetPf_LB);
@@ -372,7 +372,7 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
     pre_yawStr_RB = (RotateYaw(yaw*(kx))*offsetPf_RB - offsetPf_RB);
     /*  #endregion */
     
-    /* #region: CoM Trajectory Start */
+    /* #region: CoM Trajectory */
     if (FuncInterval(RealTime, t0, t1, dt) == true) // Put robot on the ground
     {
         Cx = 0; dCx = 0; ddCx = 0;
@@ -454,7 +454,7 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
     Ycop = Cy - Cz * ddCy / g;
     /* #endregion: CoM Trajectory End */
 
-    /* #region: Feet Trajectory Start */
+    /* #region: Feet Trajectory */
     if (FuncInterval(RealTime, t0, t1, dt) == true) // Put robot on the ground
     {
         Footx_LF.setZero(); Footy_LF.setZero(); Footz_LF.setZero();       
@@ -467,13 +467,19 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
         Footx_LF = FuncPoly5th(RealTime, t1, t2, 0, 0, 0, Strx*0.5, 0, 0);
         Footy_LF = FuncPoly5th(RealTime, t1, t2, 0, 0, 0, Stry*0.5, 0, 0);
         Footz_LF = FuncPoly6th(RealTime, t1, t2, 0, 0, 0, 0, 0, 0, Fh);
+        // Footx_LF = FuncPoly3rd(RealTime, t1, t2, 0, 0, Strx*0.5, 0);
+        // Footy_LF = FuncPoly3rd(RealTime, t1, t2, 0, 0, Stry*0.5, 0);
+        // Footz_LF = FuncPoly4th(RealTime, t1, t2, 0, 0, 0, 0, Fh);
 
         Footx_RF.setZero(); Footy_RF.setZero(); Footz_RF.setZero();
         Footx_LB.setZero(); Footy_LB.setZero(); Footz_LB.setZero();
 
         Footx_RB = FuncPoly5th(RealTime, t1, t2, 0, 0, 0, Strx*0.5, 0, 0);
         Footy_RB = FuncPoly5th(RealTime, t1, t2, 0, 0, 0, Stry*0.5, 0, 0);
-        Footz_RB = FuncPoly6th(RealTime, t1, t2, 0, 0, 0, 0, 0, 0, Fh);                
+        Footz_RB = FuncPoly6th(RealTime, t1, t2, 0, 0, 0, 0, 0, 0, Fh); 
+        // Footx_RB = FuncPoly3rd(RealTime, t1, t2, 0, 0, Strx*0.5, 0);
+        // Footy_RB = FuncPoly3rd(RealTime, t1, t2, 0, 0, Stry*0.5, 0);
+        // Footz_RB = FuncPoly4th(RealTime, t1, t2, 0, 0, 0, 0, Fh);                
     }
     else if (FuncInterval(RealTime, t2, tstart_w, dt) == true)
     {
@@ -498,24 +504,36 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
             Footx_LF = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_LF(0), 0, 0, Pend_LF(0), 0, 0);
             Footy_LF = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_LF(1), 0, 0, Pend_LF(1), 0, 0);
             Footz_LF = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, Fh);
+            // Footx_LF = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_LF(0), 0, Pend_LF(0), 0);
+            // Footy_LF = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_LF(1), 0, Pend_LF(1), 0);
+            // Footz_LF = FuncPoly4th(RealTime, ts, ts + Ts, 0, 0, 0, 0, Fh);
 
             Pstart_RF << Strx*(kx + 1) + yawStr_RF(0), Stry*(kx + 1) + yawStr_RF(1), 0;
             Pend_RF << Strx*(kx + 1) + yawStr_RF(0), Stry*(kx + 1) + yawStr_RF(1), 0;
             Footx_RF = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_RF(0), 0, 0, Pend_RF(0), 0, 0);
             Footy_RF = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_RF(1), 0, 0, Pend_RF(1), 0, 0);
             Footz_RF = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, 0);
+            // Footx_RF = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_RF(0), 0, Pend_RF(0), 0);
+            // Footy_RF = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_RF(1), 0, Pend_RF(1), 0);
+            // Footz_RF = FuncPoly4th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0);
 
             Pstart_LB << Strx*(kx + 1) + yawStr_LB(0), Stry*(kx + 1) + yawStr_LB(1), 0;
             Pend_LB << Strx*(kx + 1) + yawStr_LB(0), Stry*(kx + 1) + yawStr_LB(1), 0;
             Footx_LB = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_LB(0), 0, 0, Pend_LB(0), 0, 0);
             Footy_LB = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_LB(1), 0, 0, Pend_LB(1), 0, 0);
             Footz_LB = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, 0);
+            // Footx_LB = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_LB(0), 0, Pend_LB(0), 0);
+            // Footy_LB = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_LB(1), 0, Pend_LB(1), 0);
+            // Footz_LB = FuncPoly4th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0);
 
             Pstart_RB << Strx*0.5 + Strx*kx + pre_yawStr_RB(0), Stry*0.5 + Stry*kx + pre_yawStr_RB(1), 0;
             Pend_RB << Strx*0.5 + Strx*(kx + 1) + yawStr_RB(0), Stry*0.5 + Stry*(kx + 1) + yawStr_RB(1), 0;
             Footx_RB = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_RB(0), 0, 0, Pend_RB(0), 0, 0);
             Footy_RB = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_RB(1), 0, 0, Pend_RB(1), 0, 0);
             Footz_RB = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, Fh);
+            // Footx_RB = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_RB(0), 0, Pend_RB(0), 0);
+            // Footy_RB = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_RB(1), 0, Pend_RB(1), 0);
+            // Footz_RB = FuncPoly4th(RealTime, ts, ts + Ts, 0, 0, 0, 0, Fh);
         }
         else // Right foot swing, left foot stand
         {
@@ -524,24 +542,36 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
             Footx_LF = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_LF(0), 0, 0, Pend_LF(0), 0, 0);
             Footy_LF = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_LF(1), 0, 0, Pend_LF(1), 0, 0);
             Footz_LF = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, 0);
+            // Footx_LF = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_LF(0), 0, Pend_LF(0), 0);
+            // Footy_LF = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_LF(1), 0, Pend_LF(1), 0);
+            // Footz_LF = FuncPoly4th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0);
 
             Pstart_RF << Strx*kx + pre_yawStr_RF(0), Stry*kx + pre_yawStr_RF(1), 0;
             Pend_RF << Strx*(kx + 1) + yawStr_RF(0), Stry*(kx + 1) + yawStr_RF(1), 0;
             Footx_RF = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_RF(0), 0, 0, Pend_RF(0), 0, 0);
             Footy_RF = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_RF(1), 0, 0, Pend_RF(1), 0, 0);
             Footz_RF = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, Fh);
+            // Footx_RF = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_RF(0), 0, Pend_RF(0), 0);
+            // Footy_RF = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_RF(1), 0, Pend_RF(1), 0);
+            // Footz_RF = FuncPoly4th(RealTime, ts, ts + Ts, 0, 0, 0, 0, Fh);
 
             Pstart_LB << Strx*kx + pre_yawStr_LB(0), Stry*kx + pre_yawStr_LB(1), 0;
             Pend_LB << Strx*(kx + 1) + yawStr_LB(0), Stry*(kx + 1) + yawStr_LB(1), 0;
             Footx_LB = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_LB(0), 0, 0, Pend_LB(0), 0, 0);
             Footy_LB = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_LB(1), 0, 0, Pend_LB(1), 0, 0);
             Footz_LB = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, Fh);
+            // Footx_LB = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_LB(0), 0, Pend_LB(0), 0);
+            // Footy_LB = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_LB(1), 0, Pend_LB(1), 0);
+            // Footz_LB = FuncPoly4th(RealTime, ts, ts + Ts, 0, 0, 0, 0, Fh);
 
             Pstart_RB << Strx*0.5 + Strx*kx + pre_yawStr_RB(0), Stry*0.5 + Stry*kx + pre_yawStr_RB(1), 0;
             Pend_RB << Strx*0.5 + Strx*kx + pre_yawStr_RB(0), Stry*0.5 + Stry*kx + pre_yawStr_RB(1), 0;
             Footx_RB = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_RB(0), 0, 0, Pend_RB(0), 0, 0);
             Footy_RB = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_RB(1), 0, 0, Pend_RB(1), 0, 0);
             Footz_RB = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, 0);
+            // Footx_RB = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_RB(0), 0, Pend_RB(0), 0);
+            // Footy_RB = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_RB(1), 0, Pend_RB(1), 0);
+            // Footz_RB = FuncPoly4th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0);
         }
 
     }
@@ -559,12 +589,18 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
             Footx_RF = FuncPoly5th(RealTime, tend_w, t3, Pstart_RF(0), 0, 0, Pend_RF(0), 0, 0);
             Footy_RF = FuncPoly5th(RealTime, tend_w, t3, Pstart_RF(1), 0, 0, Pend_RF(1), 0, 0);
             Footz_RF = FuncPoly6th(RealTime, tend_w, t3, 0, 0, 0, 0, 0, 0, Fh);
+            // Footx_RF = FuncPoly3rd(RealTime, tend_w, t3, Pstart_RF(0), 0, Pend_RF(0), 0);
+            // Footy_RF = FuncPoly3rd(RealTime, tend_w, t3, Pstart_RF(1), 0, Pend_RF(1), 0);
+            // Footz_RF = FuncPoly4th(RealTime, tend_w, t3, 0, 0, 0, 0, Fh);
 
             Pstart_LB << Strx*(kx + 1) + yawStr_LB(0), Stry*(kx + 1) + yawStr_LB(1), 0;
             Pend_LB << Strx*0.5 + Strx*(kx + 1) + yawStr_LB(0), Stry*0.5 + Stry*(kx + 1) + yawStr_LB(1), 0;
             Footx_LB = FuncPoly5th(RealTime, tend_w, t3, Pstart_LB(0), 0, 0, Pend_LB(0), 0, 0);
             Footy_LB = FuncPoly5th(RealTime, tend_w, t3, Pstart_LB(1), 0, 0, Pend_LB(1), 0, 0);
             Footz_LB = FuncPoly6th(RealTime, tend_w, t3, 0, 0, 0, 0, 0, 0, Fh);
+            // Footx_LB = FuncPoly3rd(RealTime, tend_w, t3, Pstart_LB(0), 0, Pend_LB(0), 0);
+            // Footy_LB = FuncPoly3rd(RealTime, tend_w, t3, Pstart_LB(1), 0, Pend_LB(1), 0);
+            // Footz_LB = FuncPoly4th(RealTime, tend_w, t3, 0, 0, 0, 0, Fh);
 
             Pend_RB << Strx*0.5 + Strx*(kx + 1) + yawStr_RB(0), Stry*0.5 + Stry*(kx + 1) + yawStr_RB(1), 0;
             Footx_RB << Pend_RB(1), 0, 0;
@@ -578,6 +614,9 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
             Footx_LF = FuncPoly5th(RealTime, tend_w, t3, Pstart_LF(0), 0, 0, Pend_LF(0), 0, 0);
             Footy_LF = FuncPoly5th(RealTime, tend_w, t3, Pstart_LF(1), 0, 0, Pend_LF(1), 0, 0);
             Footz_LF = FuncPoly6th(RealTime, tend_w, t3, 0, 0, 0, 0, 0, 0, Fh);
+            // Footx_LF = FuncPoly3rd(RealTime, tend_w, t3, Pstart_LF(0), 0, Pend_LF(0), 0);
+            // Footy_LF = FuncPoly3rd(RealTime, tend_w, t3, Pstart_LF(1), 0, Pend_LF(1), 0);
+            // Footz_LF = FuncPoly4th(RealTime, tend_w, t3, 0, 0, 0, 0, Fh);
 
             Pend_RF << Strx*(kx + 1) + yawStr_RF(0), Stry*(kx + 1) + yawStr_RF(1), 0;
             Footx_RF << Pend_RF(0), 0, 0;
@@ -594,6 +633,9 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
             Footx_RB = FuncPoly5th(RealTime, tend_w, t3, Pstart_RB(0), 0, 0, Pend_RB(0), 0, 0);
             Footy_RB = FuncPoly5th(RealTime, tend_w, t3, Pstart_RB(1), 0, 0, Pend_RB(1), 0, 0);
             Footz_RB = FuncPoly6th(RealTime, tend_w, t3, 0, 0, 0, 0, 0, 0, Fh);
+            // Footx_RB = FuncPoly3rd(RealTime, tend_w, t3, Pstart_RB(0), 0, Pend_RB(0), 0);
+            // Footy_RB = FuncPoly3rd(RealTime, tend_w, t3, Pstart_RB(1), 0, Pend_RB(1), 0);
+            // Footz_RB = FuncPoly4th(RealTime, tend_w, t3, 0, 0, 0, 0, Fh);
         }       
     }
     else
@@ -638,6 +680,377 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
     /* #endregion: Feet Trajectory End */
    
 }
+
+void trajectory::comTrajectory2(double RealTime, double Ts, double Td, int Nphase, double px, double py, double vx_mean, double vy_mean, double yaw, double Cz, double Fh, double dt)
+{    
+    double t0 = 0.0; // Beginning of the Universe(or Simulation)
+    double t1 = t0 + 0; // Put robot on the ground
+    double t2 = t1 + Ts; // First half step
+    double tstart_w = t2 + Td; // Walking start
+    double tend_w = tstart_w + (Ts + Td) * Nphase; // Walking end
+    double t3 = tend_w + Ts; // CoM stoping phase
+
+    double g = 9.81; // Gravitational acceleration
+    double w = sqrt(g / Cz); // Natural freq of equivalent pendulum
+
+    Eigen::Vector3d trajComX, trajComY, trajComYaw;
+    Eigen::VectorXd returnVals(16);
+
+    comVel << vx_mean, vy_mean, 0;
+    comVel = RotateYaw(yaw)*comVel;   
+
+    /* #region: Phase Calculation Start(Each Ts + Td is one phase) */
+    int k, kx;
+    double Rt4Fr = (RealTime - tstart_w) / (Ts + Td);
+    if (FuncInterval(RealTime, t0, tstart_w, dt) == true)
+    {
+        k = 0;
+        kx = 0;
+    }
+    else if (FuncGreater(RealTime, tend_w, dt) == true)
+    {
+        k = Nphase - 1;
+        kx = floor(k / 2);
+    }
+    else
+    {
+        k = floor(Rt4Fr);
+        kx = floor(Rt4Fr / 2);
+    }
+    /* #endregion: Phase Calculation Start(Each Ts + Td is one phase) */
+        
+    /* #region: Xcom parameters */
+    Strx = comVel(0)*(Ts+Td);
+    /* #endregion: Xcom parameters */
+
+    /* #region: Ycom parameters */
+    Stry = comVel(1)*(Ts+Td);
+    /* #endregion: Ycom parameters */
+    
+    /* #region: Yaw */
+    offsetPf_LF << + Pfx_offset_fr, + Pfy_offset + LatOut, Pfz_offset;
+    offsetPf_RF << + Pfx_offset_fr, - Pfy_offset - LatOut, Pfz_offset;
+    offsetPf_LB << - Pfx_offset_bc, + Pfy_offset + LatOut, Pfz_offset;
+    offsetPf_RB << - Pfx_offset_bc, - Pfy_offset - LatOut, Pfz_offset;
+    yawStr_LF = (RotateYaw(yaw*(kx+1))*offsetPf_LF - offsetPf_LF);
+    yawStr_RF = (RotateYaw(yaw*(kx+1))*offsetPf_RF - offsetPf_RF);
+    yawStr_LB = (RotateYaw(yaw*(kx+1))*offsetPf_LB - offsetPf_LB);
+    yawStr_RB = (RotateYaw(yaw*(kx+1))*offsetPf_RB - offsetPf_RB);
+    pre_yawStr_LF = (RotateYaw(yaw*(kx))*offsetPf_LF - offsetPf_LF);
+    pre_yawStr_RF = (RotateYaw(yaw*(kx))*offsetPf_RF - offsetPf_RF);
+    pre_yawStr_LB = (RotateYaw(yaw*(kx))*offsetPf_LB - offsetPf_LB);
+    pre_yawStr_RB = (RotateYaw(yaw*(kx))*offsetPf_RB - offsetPf_RB);
+    /*  #endregion */
+    
+    /* #region: CoM Trajectory */
+    if (FuncInterval(RealTime, t0, t1, dt) == true) // Put robot on the ground
+    {
+        Cx = 0; dCx = 0; ddCx = 0;
+        Cy = 0; dCy = 0; ddCy = 0;
+        trajComYaw.setZero();
+    }
+    else if (FuncInterval(RealTime, t1, t2, dt) == true) // Initialize CoM position (First half step)
+    {
+        trajComX = FuncPoly5th(RealTime, 0, Ts+Td, 0, 0, 0, Strx - comVel(0)*Ts*0.5, comVel(0), 0);
+        trajComY = FuncPoly5th(RealTime, 0, Ts+Td, 0, 0, 0, Stry - comVel(1)*Ts*0.5, comVel(1), 0);
+        Cx = trajComX(0); dCx = trajComX(1); ddCx = trajComX(2);
+        Cy = trajComY(0); dCy = trajComY(1); ddCy = trajComY(2);
+        trajComYaw.setZero();
+    }
+    else if (FuncInterval(RealTime, t2, tstart_w, dt) == true) // Initialite CoM trajectory (Just before walking starts)
+    {
+        trajComX = FuncPoly5th(RealTime, t2, tstart_w, Cxd, dCx0, -ddCx0, Cxd0, dCx0, ddCx0);
+        trajComY = FuncPoly5th(RealTime, t2, tstart_w, Cyd, dCy0, -ddCy0, Cyd0, dCy0, ddCy0);
+        Cx = trajComX(0); dCx = trajComX(1); ddCx = trajComX(2);
+        Cy = trajComY(0); dCy = trajComY(1); ddCy = trajComY(2);
+        trajComYaw = FuncPoly5th(RealTime, t2, tstart_w, 0, 0, 0, 0, 0, 0);
+    }
+    else if (FuncInterval(RealTime, tstart_w, tend_w, dt) == true) // Start walking
+    {
+        double Rt = RealTime - tstart_w - (Ts + Td) * (k);
+        if (FuncInterval(Rt, 0, Ts, dt) == true) // Single Support Phase
+        {
+            double s_T = Rt;
+            Cx = (Cx0 - px) * cosh(w * s_T) + (dCx0 / w) * sinh(w * s_T) + px;
+            dCx = w * (Cx0 - px) * sinh(w * s_T) + dCx0 * cosh(w * s_T);
+            ddCx = w * w * (Cx0 - px) * cosh(w * s_T) + w * dCx0 * sinh(w * s_T);
+            Cy = (Cy0 - py) * cosh(w * s_T) + (dCy0 / w) * sinh(w * s_T) + py;
+            dCy = w * (Cy0 - py) * sinh(w * s_T) + dCy0 * cosh(w * s_T);
+            ddCy = w * w * (Cy0 - py) * cosh(w * s_T) + w * dCy0 * sinh(w * s_T);
+            Cx = Cx + (k + 1) * Strx / 2;
+            Cy = Cy + (k + 1) * Stry / 2;
+            trajComYaw << yaw*k; 0; 0;
+            Cyaw = trajComYaw(0);
+        }
+        else if (FuncInterval(Rt, Ts, Ts + Td, dt) == true) // Double Support Phase
+        {
+            double d_T = Rt - Ts;
+            Cx = (d_Cx0 - px) * cosh(w * d_T) + ((d_dCx0 - Kx) / w) * sinh(w * d_T) + Kx * d_T + px;
+            dCx = w * (d_Cx0 - px) * sinh(w * d_T) + (d_dCx0 - Kx) * cosh(w * d_T) + Kx;
+            ddCx = w * w * (d_Cx0 - px) * cosh(w * d_T) + w * (d_dCx0 - Kx) * sinh(w * d_T);
+            Cy = (d_Cy0 - py) * cosh(w * d_T) + ((d_dCy0 - Ky) / w) * sinh(w * d_T) + Ky * d_T + py;
+            dCy = w * (d_Cy0 - py) * sinh(w * d_T) + (d_dCy0 - Ky) * cosh(w * d_T) + Ky;
+            ddCy = w * w * (d_Cy0 - py) * cosh(w * d_T) + w * (d_dCy0 - Ky) * sinh(w * d_T);
+            Cx = Cx + (k + 1) * Strx / 2;
+            Cy = Cy + (k + 1) * Stry / 2;
+            
+            trajComYaw = FuncPoly5th(Rt, Ts, Ts+Td, yaw*k, 0, 0, yaw*(k+1), 0, 0);
+            Cyaw = trajComYaw(0);
+        }
+    }
+    else if (FuncInterval(RealTime, tend_w, t3, dt) == true) // Stop CoM trajectory(After walking ends)
+    {
+        double PosX_start = Cxd0 + (k + 1) * Strx / 2;
+        double PosX_end = Strx / 2 + (k + 1) * Strx / 2;
+        double PosY_start = Cyd0 + (k + 1) * Stry / 2;
+        double PosY_end = Stry / 2 + (k + 1) * Stry / 2;
+        trajComX = FuncPoly5th(RealTime,  tend_w,  t3,  PosX_start,  dCx0,  ddCx0, PosX_end, 0, 0);
+        trajComY = FuncPoly5th(RealTime,  tend_w,  t3,  PosY_start,  dCy0,  ddCy0, PosY_end, 0, 0);
+        Cx = trajComX(0); dCx = trajComX(1); ddCx = trajComX(2);
+        Cy = trajComY(0); dCy = trajComY(1); ddCy = trajComY(2);
+
+        trajComYaw = FuncPoly5th(RealTime, tend_w, t3, yaw*(k+1), 0, 0, yaw*(k+1), 0, 0);
+        Cyaw = trajComYaw(0);
+    }
+    else
+    {
+        Cx = Strx / 2 + (k + 1) * Strx / 2; dCx = 0; ddCx = 0;
+        Cy = Stry / 2 + (k + 1) * Stry / 2; dCy = 0; ddCy = 0;
+        trajComYaw << yaw*(k+1); 0; 0;
+        Cyaw = trajComYaw(0);
+    }    
+
+    Xcop = Cx - Cz * ddCx / g;
+    Ycop = Cy - Cz * ddCy / g;
+    /* #endregion: CoM Trajectory End */
+
+    /* #region: Feet Trajectory */
+    if (FuncInterval(RealTime, t0, t1, dt) == true) // Put robot on the ground
+    {
+        Footx_LF.setZero(); Footy_LF.setZero(); Footz_LF.setZero();       
+        Footx_RF.setZero(); Footy_RF.setZero(); Footz_RF.setZero();
+        Footx_LB.setZero(); Footy_LB.setZero(); Footz_LB.setZero();       
+        Footx_RB.setZero(); Footy_RB.setZero(); Footz_RB.setZero();       
+    }
+    else if (FuncInterval(RealTime, t1, t2, dt) == true) // Feet trajectory initialization(First half step)
+    {
+        Footx_LF = FuncPoly5th(RealTime, t1, t2, 0, 0, 0, Strx*0.5, 0, 0);
+        Footy_LF = FuncPoly5th(RealTime, t1, t2, 0, 0, 0, Stry*0.5, 0, 0);
+        Footz_LF = FuncPoly6th(RealTime, t1, t2, 0, 0, 0, 0, 0, 0, Fh);
+        // Footx_LF = FuncPoly3rd(RealTime, t1, t2, 0, 0, Strx*0.5, 0);
+        // Footy_LF = FuncPoly3rd(RealTime, t1, t2, 0, 0, Stry*0.5, 0);
+        // Footz_LF = FuncPoly4th(RealTime, t1, t2, 0, 0, 0, 0, Fh);
+
+        Footx_RF.setZero(); Footy_RF.setZero(); Footz_RF.setZero();
+        Footx_LB.setZero(); Footy_LB.setZero(); Footz_LB.setZero();
+
+        Footx_RB = FuncPoly5th(RealTime, t1, t2, 0, 0, 0, Strx*0.5, 0, 0);
+        Footy_RB = FuncPoly5th(RealTime, t1, t2, 0, 0, 0, Stry*0.5, 0, 0);
+        Footz_RB = FuncPoly6th(RealTime, t1, t2, 0, 0, 0, 0, 0, 0, Fh); 
+        // Footx_RB = FuncPoly3rd(RealTime, t1, t2, 0, 0, Strx*0.5, 0);
+        // Footy_RB = FuncPoly3rd(RealTime, t1, t2, 0, 0, Stry*0.5, 0);
+        // Footz_RB = FuncPoly4th(RealTime, t1, t2, 0, 0, 0, 0, Fh);                
+    }
+    else if (FuncInterval(RealTime, t2, tstart_w, dt) == true)
+    {
+        Footx_LF << Strx*0.5, 0, 0;
+        Footy_LF << Stry*0.5, 0, 0;
+        Footz_LF << 0, 0, 0;
+
+        Footx_RF.setZero(); Footy_RF.setZero(); Footz_RF.setZero();
+        Footx_LB.setZero(); Footy_LB.setZero(); Footz_LB.setZero();
+
+        Footx_RB << Strx*0.5, 0, 0;
+        Footy_RB << Stry*0.5, 0, 0;
+        Footz_RB << 0, 0, 0;        
+    }
+    else if (FuncInterval(RealTime, tstart_w, tend_w, dt) == true) // Feet trajectory after initialization
+    {
+        double ts = tstart_w + (Ts + Td) * k;
+        if (((k + 1) % 2) == 0) // Left foot swing, right foot stand
+        {
+            Pstart_LF << Strx*0.5 + Strx*kx + pre_yawStr_LF(0), Stry*0.5 + Stry*kx + pre_yawStr_LF(1), 0;
+            Pend_LF << Strx*0.5 + Strx*(kx + 1) + yawStr_LF(0), Stry*0.5 + Stry*(kx + 1) + yawStr_LF(1), 0;
+            Footx_LF = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_LF(0), 0, 0, Pend_LF(0), 0, 0);
+            Footy_LF = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_LF(1), 0, 0, Pend_LF(1), 0, 0);
+            Footz_LF = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, Fh);
+            // Footx_LF = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_LF(0), 0, Pend_LF(0), 0);
+            // Footy_LF = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_LF(1), 0, Pend_LF(1), 0);
+            // Footz_LF = FuncPoly4th(RealTime, ts, ts + Ts, 0, 0, 0, 0, Fh);
+
+            Pstart_RF << Strx*(kx + 1) + yawStr_RF(0), Stry*(kx + 1) + yawStr_RF(1), 0;
+            Pend_RF << Strx*(kx + 1) + yawStr_RF(0), Stry*(kx + 1) + yawStr_RF(1), 0;
+            Footx_RF = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_RF(0), 0, 0, Pend_RF(0), 0, 0);
+            Footy_RF = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_RF(1), 0, 0, Pend_RF(1), 0, 0);
+            Footz_RF = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, 0);
+            // Footx_RF = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_RF(0), 0, Pend_RF(0), 0);
+            // Footy_RF = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_RF(1), 0, Pend_RF(1), 0);
+            // Footz_RF = FuncPoly4th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0);
+
+            Pstart_LB << Strx*(kx + 1) + yawStr_LB(0), Stry*(kx + 1) + yawStr_LB(1), 0;
+            Pend_LB << Strx*(kx + 1) + yawStr_LB(0), Stry*(kx + 1) + yawStr_LB(1), 0;
+            Footx_LB = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_LB(0), 0, 0, Pend_LB(0), 0, 0);
+            Footy_LB = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_LB(1), 0, 0, Pend_LB(1), 0, 0);
+            Footz_LB = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, 0);
+            // Footx_LB = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_LB(0), 0, Pend_LB(0), 0);
+            // Footy_LB = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_LB(1), 0, Pend_LB(1), 0);
+            // Footz_LB = FuncPoly4th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0);
+
+            Pstart_RB << Strx*0.5 + Strx*kx + pre_yawStr_RB(0), Stry*0.5 + Stry*kx + pre_yawStr_RB(1), 0;
+            Pend_RB << Strx*0.5 + Strx*(kx + 1) + yawStr_RB(0), Stry*0.5 + Stry*(kx + 1) + yawStr_RB(1), 0;
+            Footx_RB = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_RB(0), 0, 0, Pend_RB(0), 0, 0);
+            Footy_RB = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_RB(1), 0, 0, Pend_RB(1), 0, 0);
+            Footz_RB = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, Fh);
+            // Footx_RB = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_RB(0), 0, Pend_RB(0), 0);
+            // Footy_RB = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_RB(1), 0, Pend_RB(1), 0);
+            // Footz_RB = FuncPoly4th(RealTime, ts, ts + Ts, 0, 0, 0, 0, Fh);
+        }
+        else // Right foot swing, left foot stand
+        {
+            Pstart_LF << Strx*0.5 + Strx*kx + pre_yawStr_LF(0), Stry*0.5 + Stry*kx + pre_yawStr_LF(1), 0;
+            Pend_LF << Strx*0.5 + Strx*kx + pre_yawStr_LF(0), Stry*0.5 + Stry*kx + pre_yawStr_LF(1), 0;
+            Footx_LF = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_LF(0), 0, 0, Pend_LF(0), 0, 0);
+            Footy_LF = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_LF(1), 0, 0, Pend_LF(1), 0, 0);
+            Footz_LF = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, 0);
+            // Footx_LF = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_LF(0), 0, Pend_LF(0), 0);
+            // Footy_LF = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_LF(1), 0, Pend_LF(1), 0);
+            // Footz_LF = FuncPoly4th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0);
+
+            Pstart_RF << Strx*kx + pre_yawStr_RF(0), Stry*kx + pre_yawStr_RF(1), 0;
+            Pend_RF << Strx*(kx + 1) + yawStr_RF(0), Stry*(kx + 1) + yawStr_RF(1), 0;
+            Footx_RF = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_RF(0), 0, 0, Pend_RF(0), 0, 0);
+            Footy_RF = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_RF(1), 0, 0, Pend_RF(1), 0, 0);
+            Footz_RF = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, Fh);
+            // Footx_RF = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_RF(0), 0, Pend_RF(0), 0);
+            // Footy_RF = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_RF(1), 0, Pend_RF(1), 0);
+            // Footz_RF = FuncPoly4th(RealTime, ts, ts + Ts, 0, 0, 0, 0, Fh);
+
+            Pstart_LB << Strx*kx + pre_yawStr_LB(0), Stry*kx + pre_yawStr_LB(1), 0;
+            Pend_LB << Strx*(kx + 1) + yawStr_LB(0), Stry*(kx + 1) + yawStr_LB(1), 0;
+            Footx_LB = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_LB(0), 0, 0, Pend_LB(0), 0, 0);
+            Footy_LB = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_LB(1), 0, 0, Pend_LB(1), 0, 0);
+            Footz_LB = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, Fh);
+            // Footx_LB = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_LB(0), 0, Pend_LB(0), 0);
+            // Footy_LB = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_LB(1), 0, Pend_LB(1), 0);
+            // Footz_LB = FuncPoly4th(RealTime, ts, ts + Ts, 0, 0, 0, 0, Fh);
+
+            Pstart_RB << Strx*0.5 + Strx*kx + pre_yawStr_RB(0), Stry*0.5 + Stry*kx + pre_yawStr_RB(1), 0;
+            Pend_RB << Strx*0.5 + Strx*kx + pre_yawStr_RB(0), Stry*0.5 + Stry*kx + pre_yawStr_RB(1), 0;
+            Footx_RB = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_RB(0), 0, 0, Pend_RB(0), 0, 0);
+            Footy_RB = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_RB(1), 0, 0, Pend_RB(1), 0, 0);
+            Footz_RB = FuncPoly6th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0, 0, 0);
+            // Footx_RB = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_RB(0), 0, Pend_RB(0), 0);
+            // Footy_RB = FuncPoly3rd(RealTime, ts, ts + Ts, Pstart_RB(1), 0, Pend_RB(1), 0);
+            // Footz_RB = FuncPoly4th(RealTime, ts, ts + Ts, 0, 0, 0, 0, 0);
+        }
+
+    }
+    else if (FuncInterval(RealTime, tend_w, t3, dt) == true)
+    {
+        if (((k + 1) % 2) == 0)
+        {
+            Pend_LF << Strx*0.5 + Strx*(kx + 1) + yawStr_LF(0), Stry*0.5 + Stry*(kx + 1) + yawStr_LF(1), 0;
+            Footx_LF << Pend_LF(0), 0, 0;
+            Footy_LF << Pend_LF(1), 0, 0;
+            Footy_LF << 0, 0, 0;
+
+            Pstart_RF << Strx*(kx + 1) + yawStr_RF(0), Stry*(kx + 1) + yawStr_RF(1), 0;
+            Pend_RF << Strx*0.5 + Strx*(kx + 1) + yawStr_RF(0), Stry*0.5 + Stry*(kx + 1) + yawStr_RF(1), 0;
+            Footx_RF = FuncPoly5th(RealTime, tend_w, t3, Pstart_RF(0), 0, 0, Pend_RF(0), 0, 0);
+            Footy_RF = FuncPoly5th(RealTime, tend_w, t3, Pstart_RF(1), 0, 0, Pend_RF(1), 0, 0);
+            Footz_RF = FuncPoly6th(RealTime, tend_w, t3, 0, 0, 0, 0, 0, 0, Fh);
+            // Footx_RF = FuncPoly3rd(RealTime, tend_w, t3, Pstart_RF(0), 0, Pend_RF(0), 0);
+            // Footy_RF = FuncPoly3rd(RealTime, tend_w, t3, Pstart_RF(1), 0, Pend_RF(1), 0);
+            // Footz_RF = FuncPoly4th(RealTime, tend_w, t3, 0, 0, 0, 0, Fh);
+
+            Pstart_LB << Strx*(kx + 1) + yawStr_LB(0), Stry*(kx + 1) + yawStr_LB(1), 0;
+            Pend_LB << Strx*0.5 + Strx*(kx + 1) + yawStr_LB(0), Stry*0.5 + Stry*(kx + 1) + yawStr_LB(1), 0;
+            Footx_LB = FuncPoly5th(RealTime, tend_w, t3, Pstart_LB(0), 0, 0, Pend_LB(0), 0, 0);
+            Footy_LB = FuncPoly5th(RealTime, tend_w, t3, Pstart_LB(1), 0, 0, Pend_LB(1), 0, 0);
+            Footz_LB = FuncPoly6th(RealTime, tend_w, t3, 0, 0, 0, 0, 0, 0, Fh);
+            // Footx_LB = FuncPoly3rd(RealTime, tend_w, t3, Pstart_LB(0), 0, Pend_LB(0), 0);
+            // Footy_LB = FuncPoly3rd(RealTime, tend_w, t3, Pstart_LB(1), 0, Pend_LB(1), 0);
+            // Footz_LB = FuncPoly4th(RealTime, tend_w, t3, 0, 0, 0, 0, Fh);
+
+            Pend_RB << Strx*0.5 + Strx*(kx + 1) + yawStr_RB(0), Stry*0.5 + Stry*(kx + 1) + yawStr_RB(1), 0;
+            Footx_RB << Pend_RB(1), 0, 0;
+            Footy_RB << Pend_RB(1), 0, 0;
+            Footy_RB << 0, 0, 0;
+        }
+        else
+        {
+            Pstart_LF << Strx*0.5 + Strx*kx + pre_yawStr_LF(0), Stry*0.5 + Stry*kx + pre_yawStr_LF(1), 0;
+            Pend_LF << Strx + Strx*kx + yawStr_LF(0), Stry + Stry*kx + yawStr_LF(1), 0;
+            Footx_LF = FuncPoly5th(RealTime, tend_w, t3, Pstart_LF(0), 0, 0, Pend_LF(0), 0, 0);
+            Footy_LF = FuncPoly5th(RealTime, tend_w, t3, Pstart_LF(1), 0, 0, Pend_LF(1), 0, 0);
+            Footz_LF = FuncPoly6th(RealTime, tend_w, t3, 0, 0, 0, 0, 0, 0, Fh);
+            // Footx_LF = FuncPoly3rd(RealTime, tend_w, t3, Pstart_LF(0), 0, Pend_LF(0), 0);
+            // Footy_LF = FuncPoly3rd(RealTime, tend_w, t3, Pstart_LF(1), 0, Pend_LF(1), 0);
+            // Footz_LF = FuncPoly4th(RealTime, tend_w, t3, 0, 0, 0, 0, Fh);
+
+            Pend_RF << Strx*(kx + 1) + yawStr_RF(0), Stry*(kx + 1) + yawStr_RF(1), 0;
+            Footx_RF << Pend_RF(0), 0, 0;
+            Footy_RF << Pend_RF(1), 0, 0;
+            Footz_RF << 0, 0, 0;
+
+            Pend_LB << Strx*(kx + 1) + yawStr_LB(0), Stry*(kx + 1) + yawStr_LB(1), 0;
+            Footx_LB << Pend_LB(0), 0, 0;
+            Footy_LB << Pend_LB(1), 0, 0;
+            Footz_LB << 0, 0, 0;
+
+            Pstart_RB << Strx*0.5 + Strx*kx + pre_yawStr_RB(0), Stry*0.5 + Stry*kx + pre_yawStr_RB(1), 0;
+            Pend_RB << Strx + Strx*kx + yawStr_RB(0), Stry + Stry*kx + yawStr_RB(1), 0;
+            Footx_RB = FuncPoly5th(RealTime, tend_w, t3, Pstart_RB(0), 0, 0, Pend_RB(0), 0, 0);
+            Footy_RB = FuncPoly5th(RealTime, tend_w, t3, Pstart_RB(1), 0, 0, Pend_RB(1), 0, 0);
+            Footz_RB = FuncPoly6th(RealTime, tend_w, t3, 0, 0, 0, 0, 0, 0, Fh);
+            // Footx_RB = FuncPoly3rd(RealTime, tend_w, t3, Pstart_RB(0), 0, Pend_RB(0), 0);
+            // Footy_RB = FuncPoly3rd(RealTime, tend_w, t3, Pstart_RB(1), 0, Pend_RB(1), 0);
+            // Footz_RB = FuncPoly4th(RealTime, tend_w, t3, 0, 0, 0, 0, Fh);
+        }       
+    }
+    else
+    {
+        if (((k + 1) % 2) == 0)
+        {
+            Footx_LF << Strx*0.5 + Strx*(kx + 1) + yawStr_LF(0), 0, 0;
+            Footy_LF << Stry*0.5 + Stry*(kx + 1) + yawStr_LF(1), 0, 0;
+            Footz_LF << 0, 0, 0;
+
+            Footx_RF << Strx*0.5 + Strx*(kx + 1) + yawStr_RF(0), 0, 0;
+            Footy_RF << Stry*0.5 + Stry*(kx + 1) + yawStr_RF(1), 0, 0;
+            Footz_RF << 0, 0, 0;
+
+            Footx_LB << Strx*0.5 + Strx*(kx + 1) + yawStr_LB(0), 0, 0;
+            Footy_LB << Stry*0.5 + Stry*(kx + 1) + yawStr_LB(1), 0, 0;
+            Footz_LB << 0, 0, 0;
+
+            Footx_RB << Strx*0.5 + Strx*(kx + 1) + yawStr_RB(0), 0, 0;
+            Footy_RB << Stry*0.5 + Stry*(kx + 1) + yawStr_RB(1), 0, 0;
+            Footz_RB << 0, 0, 0;
+        }
+        else
+        {
+            Footx_LF << Strx*(kx + 1) + yawStr_LF(0), 0, 0;
+            Footy_LF << Stry*(kx + 1) + yawStr_LF(1), 0, 0;
+            Footz_LF << 0, 0, 0;
+
+            Footx_RF << Strx*(kx + 1) + yawStr_RF(0), 0, 0;
+            Footy_RF << Stry*(kx + 1) + yawStr_RF(1), 0, 0;
+            Footz_RF << 0, 0, 0;
+
+            Footx_LB << Strx*(kx + 1) + yawStr_LB(0), 0, 0;
+            Footy_LB << Stry*(kx + 1) + yawStr_LB(1), 0, 0;
+            Footz_LB << 0, 0, 0;
+
+            Footx_RB << Strx*(kx + 1) + yawStr_RB(0), 0, 0;
+            Footy_RB << Stry*(kx + 1) + yawStr_RB(1), 0, 0;
+            Footz_RB << 0, 0, 0;
+        }
+    }
+    /* #endregion: Feet Trajectory End */
+   
+}
+
 
 void trajectory::trajGeneration(double RealTime, bool walkEnable, double command_Vx, double command_Vy, double command_Yaw, double height, double dt)
 {   

@@ -1,7 +1,7 @@
 CMakeFiles/tekirV3.dir/src/main.cpp.o: \
- /home/erim/RaiSim_Simulations/TekirV3.0.1/src/main.cpp \
+ /home/erim/RaiSim_Simulations/TekirV3.0.2/src/main.cpp \
  /usr/include/stdc-predef.h \
- /home/erim/RaiSim_Simulations/TekirV3.0.1/include/main.hpp \
+ /home/erim/RaiSim_Simulations/TekirV3.0.2/include/main.hpp \
  /home/erim/raisim_ws_v1.1.7/install/include/raisim/World.hpp \
  /usr/include/c++/11/memory /usr/include/c++/11/bits/stl_algobase.h \
  /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h \
@@ -263,6 +263,8 @@ CMakeFiles/tekirV3.dir/src/main.cpp.o: \
  /usr/include/x86_64-linux-gnu/bits/xopen_lim.h \
  /usr/include/x86_64-linux-gnu/bits/uio_lim.h \
  /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/Object.hpp \
+ /usr/include/c++/11/mutex /usr/include/c++/11/bits/std_mutex.h \
+ /usr/include/c++/11/bits/unique_lock.h \
  /home/erim/raisim_ws_v1.1.7/install/include/raisim/contact/BisectionContactSolver.hpp \
  /home/erim/raisim_ws_v1.1.7/install/include/raisim/Materials.hpp \
  /home/erim/raisim_ws_v1.1.7/install/include/raisim/RaiSimTinyXmlWrapper.hpp \
@@ -524,6 +526,8 @@ CMakeFiles/tekirV3.dir/src/main.cpp.o: \
  /usr/include/x86_64-linux-gnu/c++/11/bits/opt_random.h \
  /usr/include/c++/11/bits/random.tcc \
  /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/ArticulatedSystem/ArticulatedSystem.hpp \
+ /usr/include/c++/11/map /usr/include/c++/11/bits/stl_map.h \
+ /usr/include/c++/11/bits/stl_multimap.h \
  /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/ArticulatedSystem/JointAndBodies.hpp \
  /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/singleBodies/Mesh.hpp \
  /home/erim/raisim_ws_v1.1.7/install/include/raisim/sensors/Sensors.hpp \
@@ -535,8 +539,6 @@ CMakeFiles/tekirV3.dir/src/main.cpp.o: \
  /home/erim/raisim_ws_v1.1.7/install/include/raisim/rayCollision.hpp \
  /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/ArticulatedSystem/loaders.hpp \
  /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/ArticulatedSystem/ArticulatedSystem.hpp \
- /usr/include/c++/11/map /usr/include/c++/11/bits/stl_map.h \
- /usr/include/c++/11/bits/stl_multimap.h \
  /home/erim/raisim_ws_v1.1.7/install/include/raisim/configure.hpp \
  /home/erim/raisim_ws_v1.1.7/install/include/raisim/RaisimServer.hpp \
  /usr/include/arpa/inet.h /usr/include/netinet/in.h \
@@ -580,9 +582,7 @@ CMakeFiles/tekirV3.dir/src/main.cpp.o: \
  /usr/include/x86_64-linux-gnu/sys/poll.h \
  /usr/include/x86_64-linux-gnu/bits/poll.h \
  /usr/include/x86_64-linux-gnu/bits/poll2.h /usr/include/c++/11/iterator \
- /usr/include/c++/11/bits/stream_iterator.h /usr/include/c++/11/mutex \
- /usr/include/c++/11/bits/std_mutex.h \
- /usr/include/c++/11/bits/unique_lock.h /usr/include/c++/11/thread \
+ /usr/include/c++/11/bits/stream_iterator.h /usr/include/c++/11/thread \
  /usr/include/c++/11/bits/std_thread.h \
  /usr/include/c++/11/bits/this_thread_sleep.h /usr/include/c++/11/future \
  /usr/include/c++/11/condition_variable \
@@ -667,5 +667,6 @@ CMakeFiles/tekirV3.dir/src/main.cpp.o: \
  /usr/local/include/qpOASES/extras/SolutionAnalysis.hpp \
  /usr/local/include/qpOASES/extras/SolutionAnalysis.ipp \
  /usr/local/include/allegro5/allegro_native_dialog.h \
- /home/erim/RaiSim_Simulations/TekirV3.0.1/include/trajectory.hpp \
- /home/erim/RaiSim_Simulations/TekirV3.0.1/include/functions.hpp
+ /home/erim/RaiSim_Simulations/TekirV3.0.2/include/trajectory.hpp \
+ /home/erim/RaiSim_Simulations/TekirV3.0.2/include/functions.hpp \
+ /home/erim/RaiSim_Simulations/TekirV3.0.2/include/parameters.hpp

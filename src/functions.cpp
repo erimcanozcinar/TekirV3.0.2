@@ -808,7 +808,7 @@ Eigen::Vector3d fullBodyIKan(Eigen::Vector3d Rfoot, Eigen::Vector3d Rcom, Eigen:
     case 3:
         m = -1;
         n = 1;
-        f = -1;
+        f = 1;
         L = -0.3102;
         W = 0.105;
         H = 0.002;
@@ -816,7 +816,7 @@ Eigen::Vector3d fullBodyIKan(Eigen::Vector3d Rfoot, Eigen::Vector3d Rcom, Eigen:
     case 4:
         m = -1;
         n = -1;
-        f = -1;
+        f = 1;
         L = -0.3102;
         W = -0.105;
         H = 0.002;
@@ -940,12 +940,12 @@ Eigen::Vector3d funcNewtonEuler(Eigen::Vector3d rootAbsAcc, Eigen::Matrix3d root
     case 3: // LB
         m = -1; // For roll and x axis
         n = 1; // For pitch and y axis
-        q3 = -30*PI/180;
+        q3 = 30*PI/180;
         break;
     case 4: // RB
         m = -1; // For roll and x axis
         n = -1; // For pitch and y axis
-        q3 = 30*PI/180;
+        q3 = -30*PI/180;
         break;
     }
 

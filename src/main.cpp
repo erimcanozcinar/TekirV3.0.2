@@ -8,13 +8,11 @@ int main(int argc, char** argv) {
 
     world.setTimeStep(0.001);
     world.setMaterialPairProp("steel", "steel", 0.95, 0.95, 0.001, 0.95, 0.001);
-    world.setMaterialPairProp("steel", "rubber", 0.95, 0.15, 0.001, 0.95, 0.001);
+    world.setMaterialPairProp("steel", "rubber", 2, 0.15, 0.001, 2, 0.001);
     auto ground = world.addGround(0, "steel");
     // ground->setAppearance("hidden");
 
-    auto quadruped = world.addArticulatedSystem("/home/erim/RaiSim_Simulations/TekirV3.0.1/rsc/urdf/tekir3mesh_new.urdf");
-    // auto quadruped = world.addArticulatedSystem("/home/erim/RaiSim_Simulations/TekirV3.0.1/rsc/urdf/tekir3mesh.urdf");
-    // auto quadruped = world.addArticulatedSystem("/home/erim/raisim_ws/rsc/Tekir/urdf/tekir3.urdf");
+    auto quadruped = world.addArticulatedSystem("/home/erim/RaiSim_Simulations/TekirV3.0.2/rsc/urdf/tekir3mesh_new_V2.urdf");
     quadruped->getCollisionBody("Foot_lf/0").setMaterial("rubber");
     quadruped->getCollisionBody("Foot_rf/0").setMaterial("rubber");
     quadruped->getCollisionBody("Foot_lb/0").setMaterial("rubber");
@@ -80,6 +78,7 @@ int main(int argc, char** argv) {
     server.setMap("default");
     server.focusOn(quadruped);
     server.launchServer();
+    raisim::MSLEEP(5000);
     /* #endregion */
 
     while (!jStick.close) {
@@ -88,20 +87,8 @@ int main(int argc, char** argv) {
         t = world.getWorldTime();
         dt = world.getTimeStep();
 
-        /* #region: TRAJECTORY GENERATION WITH CONTROLLER */
-        jStick.dualShockController(event_queue, event);
-        for(int i=0; i<22; i++)
-        {
-            cmdJoyF[i] = LPF(jStick.joyCmd[i], pre_cmdJoyF[i], 2*PI*0.2, dt);
-            pre_cmdJoyF[i] = cmdJoyF[i];
-        }
-        cmd_Vx = jStick.joyCmd[0]; cmd_Vy = jStick.joyCmd[1];
-        if(jStick.walkEnable) { cmd_yaw = jStick.joyCmd[2]; }
-        else { cmd_yaw = cmdJoyF[2]; }
-        cmd_pitch = cmdJoyF[3]; cmd_roll = cmdJoyF[4];
-        traj.trajGeneration(t, jStick.walkEnable, cmd_Vx, cmd_Vy, cmd_yaw, cmdJoyF[5], dt);
-        /* #endregion */
         
+
         /* #region: CONTACT DEFINITION */
         for (auto& contact : quadruped->getContacts()) // LF:3, RF:2, LB:1, RB:0
         {
@@ -163,6 +150,22 @@ int main(int argc, char** argv) {
         jVelocities << dq_LF(0), dq_LF(1), dq_LF(2), dq_RF(0), dq_RF(1), dq_RF(2), dq_LB(0), dq_LB(1), dq_LB(2), dq_RB(0), dq_RB(1), dq_RB(2);
         jAccelerations << ddQ_LF(0), ddQ_LF(1), ddQ_LF(2), ddQ_RF(0), ddQ_RF(1), ddQ_RF(2), ddQ_LB(0), ddQ_LB(1), ddQ_LB(2), ddQ_RB(0), ddQ_RB(1), ddQ_RB(2);    
         /* #endregion */
+        
+        /* #region: TRAJECTORY GENERATION WITH JOYSTICK */
+        jStick.dualShockController(event_queue, event);
+        for(int i=0; i<22; i++)
+        {
+            cmdJoyF[i] = LPF(jStick.joyCmd[i], pre_cmdJoyF[i], 2*PI*0.2, dt);
+            pre_cmdJoyF[i] = cmdJoyF[i];
+        }
+        cmd_Vx = jStick.joyCmd[0]; cmd_Vy = jStick.joyCmd[1];
+        if(jStick.walkEnable) { cmd_yaw = jStick.joyCmd[2]; }
+        else { cmd_yaw = cmdJoyF[2]; }
+        cmd_pitch = cmdJoyF[3]; cmd_roll = cmdJoyF[4];
+        if(t>1){
+            traj.trajGeneration(t, jStick.walkEnable, cmd_Vx, cmd_Vy, cmd_yaw, cmdJoyF[5], dt);
+        }
+        /* #endregion */        
          
         /* #region: ORIENTATION CONTROL */
         // Zpitch_front = Kp_pitch*(0 - imuRot(1)) + Kd_pitch*(0 - dimuRot(1));
@@ -276,12 +279,12 @@ int main(int argc, char** argv) {
         /* #region: INVERSE DYNAMICS WITH RAISIM*/
         Tau1_JF = JacTranspose_LF(q_LF(0), q_LF(1), q_LF(2), 30*PI/180) * (rootOrientation.transpose() * F1cont);
         Tau2_JF = JacTranspose_RF(q_RF(0), q_RF(1), q_RF(2), -30*PI/180) * (rootOrientation.transpose() * F2cont);
-        Tau3_JF = JacTranspose_LB(q_LB(0), q_LB(1), q_LB(2), -30*PI/180) * (rootOrientation.transpose() * F3cont);
-        Tau4_JF = JacTranspose_RB(q_RB(0), q_RB(1), q_RB(2), 30*PI/180) * (rootOrientation.transpose() * F4cont);
+        Tau3_JF = JacTranspose_LB(q_LB(0), q_LB(1), q_LB(2), 30*PI/180) * (rootOrientation.transpose() * F3cont);
+        Tau4_JF = JacTranspose_RB(q_RB(0), q_RB(1), q_RB(2), -30*PI/180) * (rootOrientation.transpose() * F4cont);
 
         JF << 0, 0, 0, 0, 0, 0, Tau1_JF(0), Tau1_JF(1), Tau1_JF(2), Tau2_JF(0), Tau2_JF(1), Tau2_JF(2), Tau3_JF(0), Tau3_JF(1), Tau3_JF(2), Tau4_JF(0), Tau4_JF(1), Tau4_JF(2);
         genAccelerationVec << genAcceleration(0), genAcceleration(1), genAcceleration(2), rootAngacceleration(0), rootAngacceleration(1), rootAngacceleration(2), ddQ_LF(0), ddQ_LF(1), ddQ_LF(2), ddQ_RF(0), ddQ_RF(1), ddQ_RF(2), ddQ_LB(0), ddQ_LB(1), ddQ_LB(2), ddQ_RB(0), ddQ_RB(1), ddQ_RB(2);
-        jointTorques = quadruped->getMassMatrix().e() * genAccelerationVec + quadruped->getNonlinearities(world.getGravity()).e() - 0*JF;
+        jointTorques = quadruped->getMassMatrix().e() * genAccelerationVec + quadruped->getNonlinearities(world.getGravity()).e() - JF;
         /* #endregion */
 
         /* #region: PD + ID CONTROLLER */
@@ -292,8 +295,13 @@ int main(int argc, char** argv) {
             Tau_RF(i) = Kp(i)*(Q_RF(i) - q_RF(i)) + Kd(i)*(dQ_RF(i) - dq_RF(i)) + jffTorques(i+3);
             Tau_LB(i) = Kp(i)*(Q_LB(i) - q_LB(i)) + Kd(i)*(dQ_LB(i) - dq_LB(i)) + jffTorques(i+6);
             Tau_RB(i) = Kp(i)*(Q_RB(i) - q_RB(i)) + Kd(i)*(dQ_RB(i) - dq_RB(i)) + jffTorques(i+9);
+            // Tau_LF(i) = Kp(i)*(Q_LF(i) - q_LF(i)) + Kd(i)*(dQ_LF(i) - dq_LF(i)) + jointTorques(i+6);
+            // Tau_RF(i) = Kp(i)*(Q_RF(i) - q_RF(i)) + Kd(i)*(dQ_RF(i) - dq_RF(i)) + jointTorques(i+9);
+            // Tau_LB(i) = Kp(i)*(Q_LB(i) - q_LB(i)) + Kd(i)*(dQ_LB(i) - dq_LB(i)) + jointTorques(i+12);
+            // Tau_RB(i) = Kp(i)*(Q_RB(i) - q_RB(i)) + Kd(i)*(dQ_RB(i) - dq_RB(i)) + jointTorques(i+15);
         }
         /* #endregion */
+
 
         /* #region: SEND COMMEND TO THE ROBOT */
         F << 0, 0, 0, 0, 0, 0, Tau_LF(0), Tau_LF(1), Tau_LF(2), Tau_RF(0), Tau_RF(1), Tau_RF(2), Tau_LB(0), Tau_LB(1), Tau_LB(2), Tau_RB(0), Tau_RB(1), Tau_RB(2);
@@ -314,7 +322,6 @@ int main(int argc, char** argv) {
         /* #endregion */
                 
         // server.setCameraPositionAndLookAt({genCoordinates(0)-1.3,genCoordinates(1),genCoordinates(2)+0.6}, {genCoordinates(0),genCoordinates(1),genCoordinates(2)});
-               
                  
         server.integrateWorldThreadSafe(); 
 
@@ -323,8 +330,8 @@ int main(int argc, char** argv) {
         // std::cout << traj.ddYc << " microseconds" << std::endl;  
 
         /* Log data (fp0:NewtonEulerTorques, fp1:PD_torques, fp2: InvDynTorques ) */
-        fprintf(fp0, "%f %f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.Pfoot_RF(0), traj.Pfoot_RF(2), traj.Pfoot_LF(0), traj.Pfoot_LF(2), traj.Yawc/2, traj.ComYaw/2, traj.aa_LF(0));
-        // fprintf(fp0, "%f %f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.Footx_R(0), traj.Footy_R(0), traj.Footz_R(0), traj.Footx_L(0), traj.Footy_L(0), traj.Footz_L(0), traj.Yaw);
+        // fprintf(fp0, "%f %f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.Pfoot_RF(0), traj.Pfoot_RF(2), traj.Pfoot_LF(0), traj.Pfoot_LF(2), traj.Yawc/2, traj.ComYaw/2, traj.aa_LF(0));
+        fprintf(fp0, "%f %f %f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.Footx_LF(0)-traj.Xc, traj.Footy_LF(0), traj.Footz_LF(0), Q_LB(2), dQ_RF(1), dQ_RF(2), dQ_LB(1), dQ_LB(2));
         // fprintf(fp0, "%f %f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.localStr_LF(0), traj.localStr_LF(1), traj.Footz_R(0), traj.Footx_L(0), traj.Footy_L(0), traj.Footz_L(0), traj.Yaw);
         
     }

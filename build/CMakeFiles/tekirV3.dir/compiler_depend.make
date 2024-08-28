@@ -787,6 +787,9 @@ CMakeFiles/tekirV3.dir/src/main.cpp.o: ../src/main.cpp \
   /usr/include/x86_64-linux-gnu/bits/xopen_lim.h \
   /usr/include/x86_64-linux-gnu/bits/uio_lim.h \
   /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/Object.hpp \
+  /usr/include/c++/11/mutex \
+  /usr/include/c++/11/bits/std_mutex.h \
+  /usr/include/c++/11/bits/unique_lock.h \
   /home/erim/raisim_ws_v1.1.7/install/include/raisim/contact/BisectionContactSolver.hpp \
   /home/erim/raisim_ws_v1.1.7/install/include/raisim/Materials.hpp \
   /home/erim/raisim_ws_v1.1.7/install/include/raisim/RaiSimTinyXmlWrapper.hpp \
@@ -1057,6 +1060,9 @@ CMakeFiles/tekirV3.dir/src/main.cpp.o: ../src/main.cpp \
   /usr/include/x86_64-linux-gnu/c++/11/bits/opt_random.h \
   /usr/include/c++/11/bits/random.tcc \
   /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/ArticulatedSystem/ArticulatedSystem.hpp \
+  /usr/include/c++/11/map \
+  /usr/include/c++/11/bits/stl_map.h \
+  /usr/include/c++/11/bits/stl_multimap.h \
   /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/ArticulatedSystem/JointAndBodies.hpp \
   /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/singleBodies/Mesh.hpp \
   /home/erim/raisim_ws_v1.1.7/install/include/raisim/sensors/Sensors.hpp \
@@ -1068,9 +1074,6 @@ CMakeFiles/tekirV3.dir/src/main.cpp.o: ../src/main.cpp \
   /home/erim/raisim_ws_v1.1.7/install/include/raisim/rayCollision.hpp \
   /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/ArticulatedSystem/loaders.hpp \
   /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/ArticulatedSystem/ArticulatedSystem.hpp \
-  /usr/include/c++/11/map \
-  /usr/include/c++/11/bits/stl_map.h \
-  /usr/include/c++/11/bits/stl_multimap.h \
   /home/erim/raisim_ws_v1.1.7/install/include/raisim/configure.hpp \
   /home/erim/raisim_ws_v1.1.7/install/include/raisim/RaisimServer.hpp \
   /usr/include/arpa/inet.h \
@@ -1121,9 +1124,6 @@ CMakeFiles/tekirV3.dir/src/main.cpp.o: ../src/main.cpp \
   /usr/include/x86_64-linux-gnu/bits/poll2.h \
   /usr/include/c++/11/iterator \
   /usr/include/c++/11/bits/stream_iterator.h \
-  /usr/include/c++/11/mutex \
-  /usr/include/c++/11/bits/std_mutex.h \
-  /usr/include/c++/11/bits/unique_lock.h \
   /usr/include/c++/11/thread \
   /usr/include/c++/11/bits/std_thread.h \
   /usr/include/c++/11/bits/this_thread_sleep.h \
@@ -1222,7 +1222,8 @@ CMakeFiles/tekirV3.dir/src/main.cpp.o: ../src/main.cpp \
   /usr/local/include/qpOASES/extras/SolutionAnalysis.ipp \
   /usr/local/include/allegro5/allegro_native_dialog.h \
   ../include/trajectory.hpp \
-  ../include/functions.hpp
+  ../include/functions.hpp \
+  ../include/parameters.hpp
 
 CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
   /usr/include/stdc-predef.h \
@@ -1752,7 +1753,8 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
   /usr/local/include/allegro5/platform/alunix.h \
   /usr/local/include/allegro5/allegro_native_dialog.h \
   ../include/functions.hpp \
-  /usr/include/c++/11/iostream
+  /usr/include/c++/11/iostream \
+  ../include/parameters.hpp
 
 
 ../include/trajectory.hpp:
@@ -1865,14 +1867,6 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 
 /usr/include/c++/11/thread:
 
-/usr/include/c++/11/bits/unique_lock.h:
-
-/usr/local/include/allegro5/keycodes.h:
-
-/usr/include/c++/11/bits/std_mutex.h:
-
-/usr/include/c++/11/mutex:
-
 /usr/include/c++/11/bits/stream_iterator.h:
 
 /usr/include/c++/11/iterator:
@@ -1939,14 +1933,6 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 
 /usr/include/netinet/in.h:
 
-/usr/include/c++/11/bits/stl_multimap.h:
-
-/home/erim/raisim_ws_v1.1.7/install/include/raisim/server/Charts.hpp:
-
-/usr/include/c++/11/bits/stl_map.h:
-
-/usr/include/c++/11/map:
-
 /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/ArticulatedSystem/loaders.hpp:
 
 /home/erim/raisim_ws_v1.1.7/install/include/raisim/sensors/InertialMeasurementUnit.hpp:
@@ -1956,6 +1942,14 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 /home/erim/raisim_ws_v1.1.7/install/include/raisim/constraints/PinConstraint.hpp:
 
 /home/erim/raisim_ws_v1.1.7/install/include/raisim/sensors/Sensors.hpp:
+
+/usr/include/c++/11/bits/stl_multimap.h:
+
+/home/erim/raisim_ws_v1.1.7/install/include/raisim/server/Charts.hpp:
+
+/usr/include/c++/11/bits/stl_map.h:
+
+/usr/include/c++/11/map:
 
 /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/ArticulatedSystem/ArticulatedSystem.hpp:
 
@@ -2019,6 +2013,12 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 
 /home/erim/raisim_ws_v1.1.7/install/include/ode/common.h:
 
+/home/erim/raisim_ws_v1.1.7/install/include/raisim/rayCollision.hpp:
+
+/home/erim/raisim_ws_v1.1.7/install/include/ode/objects.h:
+
+/home/erim/raisim_ws_v1.1.7/install/include/raisim/RaiSimTinyXmlWriter.hpp:
+
 /usr/include/c++/11/bits/stl_heap.h:
 
 /usr/include/c++/11/bits/std_abs.h:
@@ -2060,6 +2060,8 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 /usr/include/c++/11/bits/refwrap.h:
 
 /usr/include/linux/stddef.h:
+
+/usr/include/c++/11/bits/unique_lock.h:
 
 /usr/include/c++/11/array:
 
@@ -2455,10 +2457,6 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 
 /usr/include/x86_64-linux-gnu/bits/types/clock_t.h:
 
-/home/erim/raisim_ws_v1.1.7/install/include/raisim/rayCollision.hpp:
-
-/home/erim/raisim_ws_v1.1.7/install/include/ode/objects.h:
-
 /usr/include/x86_64-linux-gnu/sys/cdefs.h:
 
 /usr/include/eigen3/Eigen/src/Core/DiagonalProduct.h:
@@ -2621,6 +2619,10 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 
 /usr/include/c++/11/tr1/poly_laguerre.tcc:
 
+/usr/local/include/allegro5/keycodes.h:
+
+/usr/include/c++/11/bits/std_mutex.h:
+
 /usr/include/x86_64-linux-gnu/c++/11/bits/error_constants.h:
 
 /usr/include/c++/11/tr1/ell_integral.tcc:
@@ -2727,6 +2729,8 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 
 /usr/include/eigen3/Eigen/src/Core/util/ForwardDeclarations.h:
 
+/usr/include/c++/11/mutex:
+
 /usr/include/eigen3/Eigen/src/Core/util/StaticAssert.h:
 
 /usr/include/eigen3/Eigen/src/Core/util/Memory.h:
@@ -2788,6 +2792,12 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 /usr/include/eigen3/Eigen/src/Core/arch/Default/Half.h:
 
 /usr/include/eigen3/Eigen/src/Core/arch/Default/Settings.h:
+
+/usr/local/include/qpOASES/QProblem.hpp:
+
+/home/erim/raisim_ws_v1.1.7/install/include/raisim/contact/Contact.hpp:
+
+/usr/include/asm-generic/posix_types.h:
 
 /usr/include/eigen3/Eigen/src/Core/arch/SSE/PacketMath.h:
 
@@ -3021,6 +3031,8 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 
 /usr/include/eigen3/Eigen/src/Core/util/ReenableStupidWarnings.h:
 
+../include/parameters.hpp:
+
 /usr/include/x86_64-linux-gnu/bits/types/struct_statx.h:
 
 /usr/include/eigen3/Eigen/src/misc/Kernel.h:
@@ -3240,11 +3252,3 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 /usr/include/asm-generic/errno.h:
 
 /home/erim/raisim_ws_v1.1.7/install/include/raisim/math/Blocks.hpp:
-
-/home/erim/raisim_ws_v1.1.7/install/include/raisim/RaiSimTinyXmlWriter.hpp:
-
-/usr/local/include/qpOASES/QProblem.hpp:
-
-/usr/include/asm-generic/posix_types.h:
-
-/home/erim/raisim_ws_v1.1.7/install/include/raisim/contact/Contact.hpp:

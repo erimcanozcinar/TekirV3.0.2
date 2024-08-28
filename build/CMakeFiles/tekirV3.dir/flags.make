@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = -DdIDEDOUBLE
 
-CXX_INCLUDES = -I/usr/include/eigen3 -I/home/erim/RaiSim_Simulations/TekirV3.0.1/include -isystem /home/erim/raisim_ws_v1.1.7/install/include
+CXX_INCLUDES = -I/usr/include/eigen3 -I/home/erim/RaiSim_Simulations/TekirV3.0.2/include -isystem /home/erim/raisim_ws_v1.1.7/install/include
 
 CXX_FLAGS = -O3 -DNDEBUG
 
