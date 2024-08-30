@@ -44,7 +44,7 @@ class trajectory {
         double px = 0.0;                                    // X ZMP
         double py = 0.0;                                    // Y ZMP
         double Ts = 0.28;						            // Single support phase period
-        double Td = 0.12;						            // Double support phase period
+        double Td = 0.14;						            // Double support phase period
         double Fc = 0.15;
         double Xzmp = 0, Yzmp = 0, Kphase;
 
@@ -61,7 +61,7 @@ class trajectory {
 
         // double Pfx_offset_fr = 0.36634099999999997221422631810128, Pfy_offset = 0.2414, Pfz_offset = 0;
         // double Pfx_offset_bc = 0.41205900000000000860111981637601;
-        double Pfx_offset_fr = 0.3892, Pfy_offset = 0.2414, Pfz_offset = 0;
+        double Pfx_offset_fr = 0.3892, Pfy_offset = 0.2414, Pfz_offset = 0; // 0.3892
         double Pfx_offset_bc = 0.3892;
         double LatOut = 0.0;
 

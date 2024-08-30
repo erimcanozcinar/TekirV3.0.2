@@ -78,16 +78,13 @@ int main(int argc, char** argv) {
     server.setMap("default");
     server.focusOn(quadruped);
     server.launchServer();
-    raisim::MSLEEP(5000);
+    raisim::MSLEEP(2000);
     /* #endregion */
 
     while (!jStick.close) {
-        auto start_time = std::chrono::high_resolution_clock::now();
         RS_TIMED_LOOP(int(world.getTimeStep()*1e6));
         t = world.getWorldTime();
-        dt = world.getTimeStep();
-
-        
+        dt = world.getTimeStep();        
 
         /* #region: CONTACT DEFINITION */
         for (auto& contact : quadruped->getContacts()) // LF:3, RF:2, LB:1, RB:0
@@ -167,51 +164,9 @@ int main(int argc, char** argv) {
         }
         /* #endregion */        
          
-        /* #region: ORIENTATION CONTROL */
-        // Zpitch_front = Kp_pitch*(0 - imuRot(1)) + Kd_pitch*(0 - dimuRot(1));
-        // Zpitch_back = -Kp_pitch*(0 - imuRot(1)) - Kd_pitch*(0 - dimuRot(1));
-        // Zroll_left = -Kp_roll*(0 - imuRot(0)) - Kd_roll*(0 - dimuRot(0));
-        // Zroll_right = Kp_roll * (0 - imuRot(0)) + Kd_roll * (0 - dimuRot(0));
-        // Zpitch_LF = Zpitch_front; Zpitch_RF = Zpitch_front; Zpitch_LB = Zpitch_back; Zpitch_RB = Zpitch_back;
-        // Zroll_LF = Zroll_left; Zroll_RF = Zroll_right; Zroll_LB = Zroll_left; Zroll_RB = Zroll_right;
-        // if (traj.Pfoot_L(2) > 0.0)
-        // {
-        //     Zroll_LF = 0.0; Zpitch_LF = 0.0;
-        //     Zroll_RB = 0.0; Zpitch_RB = 0.0;
-        // }
-        // if (traj.Pfoot_R(2) > 0.0)
-        // {
-        //     Zroll_RF = 0.0; Zpitch_RF = 0.0;
-        //     Zroll_LB = 0.0; Zpitch_LB = 0.0;
-        // }
-        /* #endregion */
-
-        /* #region: CENTRODIAL MOMENTUM */
-        // if (t>5)
-        // {
-        //     Zfoot_offset = 0.1;
-        //     Fcoef = 0;
-        // }else{
-        //     Zfoot_offset = 0.0;
-        //     Fcoef = 1;
-        // }
-
-        // dQcm = centrodialMomentum(quadruped);
-        // for(int i = 0; i < 6; i++)
-        // {
-        //     Qcm(i) = numIntegral(dQcm(i), prevdQcm(i), prevQcm(i), dt);
-        //     Qcm_filtered(i) = HPF(Qcm(i), prevQcm(i), prevQcm_filtered(i), 2*PI*0.1, dt);
-        //     prevdQcm(i) = dQcm(i);
-        //     prevQcm(i) = Qcm(i);
-        //     prevQcm_filtered(i) = Qcm_filtered(i);
-        // }
-        // Qcm_RF << Qcm_filtered(0), Qcm_filtered(1), Qcm_filtered(2);
-        // Qcm_LB << Qcm_filtered(3), Qcm_filtered(4), Qcm_filtered(5);
-        /* #endregion */
-
         /* #region: DESIRED COM POSITION & ORIENTATION */
         Pcom << traj.Xc, traj.Yc, traj.Zc;
-        Rcom << genCoordinates(0), genCoordinates(1), genCoordinates(2);
+        Rcom <<traj.Xc, traj.Yc, 0;
         torsoRot << cmd_roll, cmd_pitch, traj.Yawc; // Torso Orientation
         /* #endregion */
 
@@ -241,30 +196,25 @@ int main(int argc, char** argv) {
         /* #endregion */
 
         /* #region: VMC CONTROLLER FOR TORSO */
-        Rf_LF = fullBodyFK(torsoRot, {0,0,0}, q_LF, 1);
-        Rf_RF = fullBodyFK(torsoRot, {0,0,0}, q_RF, 2);
-        Rf_LB = fullBodyFK(torsoRot, {0,0,0}, q_LB, 3);
-        Rf_RB = fullBodyFK(torsoRot, {0,0,0}, q_RB, 4);
+        Rf_LF = fullBodyFK(torsoRot, Rcom, Q_LF, 1);
+        Rf_RF = fullBodyFK(torsoRot, Rcom, Q_RF, 2);
+        Rf_LB = fullBodyFK(torsoRot, Rcom, Q_LB, 3);
+        Rf_RB = fullBodyFK(torsoRot, Rcom, Q_RB, 4);
 
         dtorsoRot << Numdiff(torsoRot(0), prev_torsoRot(0), dt), Numdiff(torsoRot(1), prev_torsoRot(1), dt), Numdiff(torsoRot(2), prev_torsoRot(2), dt);
         ddtorsoRot << Numdiff(dtorsoRot(0), prev_dtorsoRot(0), dt), Numdiff(dtorsoRot(1), prev_dtorsoRot(1), dt), Numdiff(dtorsoRot(2), prev_dtorsoRot(2), dt);
         prev_torsoRot = torsoRot;
         prev_dtorsoRot = dtorsoRot;
 
-        orientControlRef = QuaternionRef(torsoRot(0), torsoRot(1), torsoRot(2), dtorsoRot(0), dtorsoRot(1), dtorsoRot(2), ddtorsoRot(0), ddtorsoRot(1), ddtorsoRot(2));
-        Eigen::Vector3d Wref, dWref, quatVecRef, quatVec;
-        Wref << orientControlRef(4),orientControlRef(5),orientControlRef(6);
-        dWref << orientControlRef(7),orientControlRef(8),orientControlRef(9);
-        quatVecRef << orientControlRef(1), orientControlRef(2), orientControlRef(3);
-        quatVec << genCoordinates(4), genCoordinates(5), genCoordinates(6);
-
-        Mvmc = Itorso*(dWref + sqrt(150)*(Wref - rootAngvelocity) - 150*(orientControlRef(0)*quatVec - genCoordinates(3)*quatVecRef + vec2SkewSym(quatVecRef)*quatVec));
-
-        Fvmc << (traj.ddXc + (traj.ddXc-genAcceleration(0))*10 + (traj.dXc - genVelocity(0))*1), (traj.ddYc + (traj.ddYc-genAcceleration(1))*10 + (traj.dYc - genVelocity(1))*1), (MASS*GRAVITY + (ddZcom-genAcceleration(2))*0 + (0 - genVelocity(2))*0), 0*Mvmc(0), 0*Mvmc(1), 0*Mvmc(2);
-        Fvmc << 0, 0, MASS*GRAVITY, Mvmc(0), Mvmc(1), 0;
-        Fmatrix = VMC(Rf_LF, Rf_RF, Rf_LB, Rf_RB, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
-        // Fmatrix = VMC(traj.Pfoot_LF-Pcom, traj.Pfoot_RF-Pcom, Rf_LB, Rf_RB, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
-        // Fmatrix = refForceCalc4(traj.Pfoot_LF-Pcom, traj.Pfoot_RF-Pcom, traj.Pfoot_LB-Pcom, traj.Pfoot_RB-Pcom,Q_LF,Q_RF,Q_LB,Q_RB,dt);
+        Fvmc(0) = 0*(traj.ddXc-genAcceleration(0)) + 0*(traj.dXc - genVelocity(0));
+        Fvmc(1) = 0*(traj.ddXc-genAcceleration(1)) + 0*(traj.dXc - genVelocity(1));
+        Fvmc(2) = 0*(traj.ddXc-genAcceleration(2)) + 0*(traj.dXc - genVelocity(2)) + MASS*GRAVITY;
+        Fvmc(3) = 3000*(torsoRot(0) - imuRot(0)) + 300*(dtorsoRot(0) - dimuRot(0));
+        Fvmc(4) = 3000*(torsoRot(1) - imuRot(1)) + 300*(dtorsoRot(1) - dimuRot(1));
+        Fvmc(5) = 3000*(torsoRot(2) - imuRot(2)) + 300*(dtorsoRot(2) - dimuRot(2));
+        
+        // Fmatrix = VMC(Rf_LF, Rf_RF, Rf_LB, Rf_RB, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
+        Fmatrix = VMC(traj.Pfoot_LF-Rcom, traj.Pfoot_RF-Rcom, traj.Pfoot_LB-Rcom, traj.Pfoot_RB-Rcom, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
         F1cont << Fmatrix(0, 0), Fmatrix(0, 1), Fmatrix(0, 2);
         F2cont << Fmatrix(1, 0), Fmatrix(1, 1), Fmatrix(1, 2);
         F3cont << Fmatrix(2, 0), Fmatrix(2, 1), Fmatrix(2, 2);
@@ -273,7 +223,6 @@ int main(int argc, char** argv) {
         
         /* #region: INVERSE DYNAMICS */
         jffTorques = funNewtonEuler4Leg(rootAbsacceleration, rootOrientation, rootAngvelocity, rootAngacceleration, jPositions, jVelocities, jAccelerations, F1cont, F2cont, F3cont, F4cont);
-        jffTorques2 = funNewtonEuler4Leg(rootAbsacceleration, rootOrientation, rootAngvelocity*0, rootAngacceleration, jPositions, jVelocities*0, jAccelerations, F1cont*0, F2cont*0, F3cont*0, F4cont*0);
         /* #endregion */
 
         /* #region: INVERSE DYNAMICS WITH RAISIM*/
@@ -324,10 +273,6 @@ int main(int argc, char** argv) {
         // server.setCameraPositionAndLookAt({genCoordinates(0)-1.3,genCoordinates(1),genCoordinates(2)+0.6}, {genCoordinates(0),genCoordinates(1),genCoordinates(2)});
                  
         server.integrateWorldThreadSafe(); 
-
-        auto end_time = std::chrono::high_resolution_clock::now();
-        auto elapsed_time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-        // std::cout << traj.ddYc << " microseconds" << std::endl;  
 
         /* Log data (fp0:NewtonEulerTorques, fp1:PD_torques, fp2: InvDynTorques ) */
         // fprintf(fp0, "%f %f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.Pfoot_RF(0), traj.Pfoot_RF(2), traj.Pfoot_LF(0), traj.Pfoot_LF(2), traj.Yawc/2, traj.ComYaw/2, traj.aa_LF(0));

@@ -1188,38 +1188,6 @@ CMakeFiles/tekirV3.dir/src/main.cpp.o: ../src/main.cpp \
   /usr/local/include/allegro5/tls.h \
   /usr/local/include/allegro5/alcompat.h \
   /usr/local/include/allegro5/platform/alunix.h \
-  /usr/local/include/qpOASES.hpp \
-  /usr/local/include/qpOASES/QProblemB.hpp \
-  /usr/local/include/qpOASES/Flipper.hpp \
-  /usr/local/include/qpOASES/Bounds.hpp \
-  /usr/local/include/qpOASES/SubjectTo.hpp \
-  /usr/local/include/qpOASES/Indexlist.hpp \
-  /usr/local/include/qpOASES/Utils.hpp \
-  /usr/local/include/qpOASES/MessageHandling.hpp \
-  /usr/local/include/qpOASES/Constants.hpp \
-  /usr/local/include/qpOASES/Types.hpp \
-  /usr/local/include/qpOASES/MessageHandling.ipp \
-  /usr/local/include/qpOASES/Utils.ipp \
-  /usr/local/include/qpOASES/Indexlist.ipp \
-  /usr/local/include/qpOASES/SubjectTo.ipp \
-  /usr/local/include/qpOASES/Bounds.ipp \
-  /usr/local/include/qpOASES/Constraints.hpp \
-  /usr/local/include/qpOASES/Constraints.ipp \
-  /usr/local/include/qpOASES/Options.hpp \
-  /usr/local/include/qpOASES/Matrices.hpp \
-  /usr/local/include/qpOASES/QProblemB.ipp \
-  /usr/local/include/qpOASES/QProblem.hpp \
-  /usr/local/include/qpOASES/ConstraintProduct.hpp \
-  /usr/local/include/qpOASES/QProblem.ipp \
-  /usr/local/include/qpOASES/SQProblem.hpp \
-  /usr/local/include/qpOASES/SQProblem.ipp \
-  /usr/local/include/qpOASES/SQProblemSchur.hpp \
-  /usr/local/include/qpOASES/SparseSolver.hpp \
-  /usr/local/include/qpOASES/LapackBlasReplacement.hpp \
-  /usr/local/include/qpOASES/SQProblemSchur.ipp \
-  /usr/local/include/qpOASES/extras/OQPinterface.hpp \
-  /usr/local/include/qpOASES/extras/SolutionAnalysis.hpp \
-  /usr/local/include/qpOASES/extras/SolutionAnalysis.ipp \
   /usr/local/include/allegro5/allegro_native_dialog.h \
   ../include/trajectory.hpp \
   ../include/functions.hpp \
@@ -1761,42 +1729,6 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 
 /usr/local/include/allegro5/allegro_native_dialog.h:
 
-/usr/local/include/qpOASES/extras/SolutionAnalysis.ipp:
-
-/usr/local/include/qpOASES/SQProblemSchur.ipp:
-
-/usr/local/include/qpOASES/LapackBlasReplacement.hpp:
-
-/usr/local/include/qpOASES/SparseSolver.hpp:
-
-/usr/local/include/qpOASES/SQProblem.ipp:
-
-/usr/local/include/qpOASES/SQProblem.hpp:
-
-/usr/local/include/qpOASES/ConstraintProduct.hpp:
-
-/usr/local/include/qpOASES/Matrices.hpp:
-
-/usr/local/include/qpOASES/Options.hpp:
-
-/usr/local/include/qpOASES/Bounds.ipp:
-
-/usr/local/include/qpOASES/Utils.ipp:
-
-/usr/local/include/qpOASES/MessageHandling.ipp:
-
-/usr/local/include/qpOASES/Constants.hpp:
-
-/usr/local/include/qpOASES/Utils.hpp:
-
-/usr/local/include/qpOASES/SubjectTo.hpp:
-
-/usr/local/include/qpOASES/Bounds.hpp:
-
-/usr/local/include/qpOASES/Flipper.hpp:
-
-/usr/local/include/qpOASES/QProblemB.hpp:
-
 /usr/local/include/allegro5/platform/alunix.h:
 
 /usr/local/include/allegro5/tls.h:
@@ -1959,8 +1891,6 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 
 /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/terrain/Ground.hpp:
 
-/usr/local/include/qpOASES/extras/SolutionAnalysis.hpp:
-
 /home/erim/raisim_ws_v1.1.7/install/include/raisim/constraints/CompliantLengthConstraint.hpp:
 
 /home/erim/raisim_ws_v1.1.7/install/include/raisim/constraints/CustomLengthConstraint.hpp:
@@ -1984,8 +1914,6 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 /home/erim/raisim_ws_v1.1.7/install/include/ode/collision_space.h:
 
 /home/erim/raisim_ws_v1.1.7/install/include/ode/matrix.h:
-
-/usr/local/include/qpOASES/Constraints.hpp:
 
 /home/erim/raisim_ws_v1.1.7/install/include/ode/odemath.h:
 
@@ -2044,8 +1972,6 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 /usr/include/c++/11/bits/erase_if.h:
 
 /usr/include/stdint.h:
-
-/usr/local/include/qpOASES/extras/OQPinterface.hpp:
 
 /usr/include/c++/11/bits/ptr_traits.h:
 
@@ -2192,8 +2118,6 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 /usr/include/c++/11/unordered_map:
 
 /usr/include/c++/11/cctype:
-
-/usr/local/include/qpOASES/Constraints.ipp:
 
 /usr/include/eigen3/Eigen/src/Core/util/XprHelper.h:
 
@@ -2389,8 +2313,6 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 
 /usr/include/eigen3/Eigen/src/Core/StlIterators.h:
 
-/usr/local/include/qpOASES/SQProblemSchur.hpp:
-
 /usr/include/eigen3/Eigen/src/misc/Image.h:
 
 /usr/include/eigen3/Eigen/src/Core/util/Macros.h:
@@ -2408,8 +2330,6 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 /usr/include/x86_64-linux-gnu/bits/pthread_stack_min-dynamic.h:
 
 /usr/include/x86_64-linux-gnu/c++/11/bits/c++config.h:
-
-/usr/local/include/qpOASES/QProblem.ipp:
 
 /usr/include/c++/11/tr1/legendre_function.tcc:
 
@@ -2465,8 +2385,6 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 
 /home/erim/raisim_ws_v1.1.7/install/include/raisim/Materials.hpp:
 
-/usr/local/include/qpOASES/Indexlist.ipp:
-
 /usr/include/x86_64-linux-gnu/bits/fcntl.h:
 
 /usr/include/x86_64-linux-gnu/asm/errno.h:
@@ -2497,13 +2415,9 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 
 /usr/include/x86_64-linux-gnu/bits/types/__locale_t.h:
 
-/usr/local/include/qpOASES/SubjectTo.ipp:
-
 /usr/include/c++/11/bits/range_access.h:
 
 /usr/include/x86_64-linux-gnu/bits/stdint-intn.h:
-
-/usr/local/include/qpOASES/QProblemB.ipp:
 
 /usr/include/eigen3/Eigen/src/Core/Redux.h:
 
@@ -2675,8 +2589,6 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 
 /usr/include/c++/11/bits/cxxabi_init_exception.h:
 
-/usr/local/include/qpOASES/MessageHandling.hpp:
-
 /usr/include/x86_64-linux-gnu/bits/statx-generic.h:
 
 /usr/include/x86_64-linux-gnu/bits/stdlib-float.h:
@@ -2793,8 +2705,6 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 
 /usr/include/eigen3/Eigen/src/Core/arch/Default/Settings.h:
 
-/usr/local/include/qpOASES/QProblem.hpp:
-
 /home/erim/raisim_ws_v1.1.7/install/include/raisim/contact/Contact.hpp:
 
 /usr/include/asm-generic/posix_types.h:
@@ -2808,8 +2718,6 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 /usr/include/eigen3/Eigen/src/Core/functors/UnaryFunctors.h:
 
 /usr/include/eigen3/Eigen/src/Core/functors/NullaryFunctors.h:
-
-/usr/local/include/qpOASES/Indexlist.hpp:
 
 /usr/include/eigen3/Eigen/src/Core/functors/StlFunctors.h:
 
@@ -2916,8 +2824,6 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 /usr/include/eigen3/Eigen/src/Core/Reshaped.h:
 
 /usr/include/eigen3/Eigen/src/Core/Transpose.h:
-
-/usr/local/include/qpOASES/Types.hpp:
 
 /usr/include/x86_64-linux-gnu/bits/stdio_lim.h:
 
@@ -3156,8 +3062,6 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: ../src/trajectory.cpp \
 /usr/include/assert.h:
 
 /usr/include/c++/11/bits/allocated_ptr.h:
-
-/usr/local/include/qpOASES.hpp:
 
 /usr/include/c++/11/ext/concurrence.h:
 

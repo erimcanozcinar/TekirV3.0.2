@@ -667,16 +667,20 @@ Eigen::Matrix<double, 4, 3> VMC(const Eigen::Vector3d& Rcf1, const Eigen::Vector
     double r2xc = Rcf2(0); double r2yc = Rcf2(1); double r2zc = Rcf2(2); // RF
     double r3xc = Rcf3(0); double r3yc = Rcf3(1); double r3zc = Rcf3(2); // LB
     double r4xc = Rcf4(0); double r4yc = Rcf4(1); double r4zc = Rcf4(2); // RB
-
     
     Eigen::Matrix <double, 6, 12> P;
     Eigen::VectorXd F(12);
     F.setZero();
 
-    if(Fc_LF(2) > 0 || Fc_RB(2) > 0) { contactState_L = 1; }
-    else { contactState_L = 0; }
-    if(Fc_RF(2) > 0 || Fc_LB(2) > 0) { contactState_R = 1; }
-    else { contactState_R = 0; }
+    // if(Fc_LF(2) > 0 || Fc_RB(2) > 0) { contactState_L = 1; }
+    // else { contactState_L = 0; }
+    // if(Fc_RF(2) > 0 || Fc_LB(2) > 0) { contactState_R = 1; }
+    // else { contactState_R = 0; }
+
+    if(Rcf1(2) > 0) { contactState_L = 0; }
+    else { contactState_L = 1; }
+    if(Rcf2(2) > 0) { contactState_R = 0; }
+    else { contactState_R = 1; }
 
     P << Eigen::MatrixXd::Identity(3,3)*contactState_L, Eigen::MatrixXd::Identity(3,3)*contactState_R, Eigen::MatrixXd::Identity(3,3)*contactState_R, Eigen::MatrixXd::Identity(3,3)*contactState_L,
          vec2SkewSym(Rcf1)*contactState_L, vec2SkewSym(Rcf2)*contactState_R, vec2SkewSym(Rcf3)*contactState_R, vec2SkewSym(Rcf4)*contactState_L;
@@ -723,11 +727,6 @@ Eigen::Vector3d fullBodyFK(Eigen::Vector3d torsoOrient, Eigen::Vector3d Rcom, Ei
     double Xc = Rcom(0);
     double Yc = Rcom(1);
     double Zc = Rcom(2);
-    
-    double q0 = Q(0);
-    double q1 = Q(1);
-    double q2 = Q(2);
-    double q3 = 30*PI/180;
 
     Eigen::Vector3d P7;
 
@@ -752,7 +751,7 @@ Eigen::Vector3d fullBodyFK(Eigen::Vector3d torsoOrient, Eigen::Vector3d Rcom, Ei
     case 3:
         m = -1;
         n = 1;
-        f = -1;
+        f = 1;
         L = -0.3102;
         W = 0.105;
         H = 0.002;
@@ -760,14 +759,24 @@ Eigen::Vector3d fullBodyFK(Eigen::Vector3d torsoOrient, Eigen::Vector3d Rcom, Ei
     case 4:
         m = -1;
         n = -1;
-        f = -1;
+        f = 1;
         L = -0.3102;
         W = -0.105;
         H = 0.002;
         break;
     }
 
+    Eigen::Vector3d Rhip;
+    Rhip << L, W, H;
+
+    double q0 = m*Q(0);
+    double q1 = n*Q(1);
+    double q2 = n*Q(2);
+    double q3 = f*30*PI/180;
+
     // Link Lengths
+    Eigen::Vector3d L0, L1, L2, L3, L4, L5;
+    Eigen::Vector4d vone;
     double d0 = m * 0.079;
     double d1 = n * 0.0262;
     double d2 = n * 0.1102;
@@ -775,10 +784,40 @@ Eigen::Vector3d fullBodyFK(Eigen::Vector3d torsoOrient, Eigen::Vector3d Rcom, Ei
     double d4 = -0.224282;
     double d5 = -0.107131; //-0.107131;
 
-    P7[0] = Xc+d3*(cos(q1)*(sin(P)*cos(q0)+cos(P)*sin(Y)*sin(q0))+cos(P)*cos(Y)*sin(q1))+d5*(cos(f*q3)*(cos(q2)*(cos(q1)*(sin(P)*cos(q0)+cos(P)*sin(Y)*sin(q0))+cos(P)*cos(Y)*sin(q1))-sin(q2)*(sin(q1)*(sin(P)*cos(q0)+cos(P)*sin(Y)*sin(q0))-cos(P)*cos(Y)*cos(q1)))-sin(f*q3)*(cos(q2)*(sin(q1)*(sin(P)*cos(q0)+cos(P)*sin(Y)*sin(q0))-cos(P)*cos(Y)*cos(q1))+sin(q2)*(cos(q1)*(sin(P)*cos(q0)+cos(P)*sin(Y)*sin(q0))+cos(P)*cos(Y)*sin(q1))))+d4*(cos(q2)*(cos(q1)*(sin(P)*cos(q0)+cos(P)*sin(Y)*sin(q0))+cos(P)*cos(Y)*sin(q1))-sin(q2)*(sin(q1)*(sin(P)*cos(q0)+cos(P)*sin(Y)*sin(q0))-cos(P)*cos(Y)*cos(q1)))+H*sin(P)+d1*(sin(P)*sin(q0)-cos(P)*sin(Y)*cos(q0))+d2*(sin(P)*sin(q0)-cos(P)*sin(Y)*cos(q0))+L*cos(P)*cos(Y)+d0*cos(P)*cos(Y)-W*cos(P)*sin(Y);
-    P7[1] = Yc+d4*(cos(q2)*(sin(q1)*(cos(R)*sin(Y)+cos(Y)*sin(P)*sin(R))-cos(q1)*(sin(q0)*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))+cos(P)*sin(R)*cos(q0)))+sin(q2)*(cos(q1)*(cos(R)*sin(Y)+cos(Y)*sin(P)*sin(R))+sin(q1)*(sin(q0)*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))+cos(P)*sin(R)*cos(q0))))+L*(cos(R)*sin(Y)+cos(Y)*sin(P)*sin(R))+d5*(cos(f*q3)*(cos(q2)*(sin(q1)*(cos(R)*sin(Y)+cos(Y)*sin(P)*sin(R))-cos(q1)*(sin(q0)*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))+cos(P)*sin(R)*cos(q0)))+sin(q2)*(cos(q1)*(cos(R)*sin(Y)+cos(Y)*sin(P)*sin(R))+sin(q1)*(sin(q0)*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))+cos(P)*sin(R)*cos(q0))))+sin(f*q3)*(cos(q2)*(cos(q1)*(cos(R)*sin(Y)+cos(Y)*sin(P)*sin(R))+sin(q1)*(sin(q0)*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))+cos(P)*sin(R)*cos(q0)))-sin(q2)*(sin(q1)*(cos(R)*sin(Y)+cos(Y)*sin(P)*sin(R))-cos(q1)*(sin(q0)*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))+cos(P)*sin(R)*cos(q0)))))+W*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))+d0*(cos(R)*sin(Y)+cos(Y)*sin(P)*sin(R))+d3*(sin(q1)*(cos(R)*sin(Y)+cos(Y)*sin(P)*sin(R))-cos(q1)*(sin(q0)*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))+cos(P)*sin(R)*cos(q0)))+d1*(cos(q0)*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))-cos(P)*sin(R)*sin(q0))+d2*(cos(q0)*(cos(R)*cos(Y)-sin(P)*sin(R)*sin(Y))-cos(P)*sin(R)*sin(q0))-H*cos(P)*sin(R);
-    P7[2] = Zc+d5*(cos(f*q3)*(cos(q2)*(sin(q1)*(sin(R)*sin(Y)-cos(R)*cos(Y)*sin(P))-cos(q1)*(sin(q0)*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))-cos(P)*cos(R)*cos(q0)))+sin(q2)*(cos(q1)*(sin(R)*sin(Y)-cos(R)*cos(Y)*sin(P))+sin(q1)*(sin(q0)*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))-cos(P)*cos(R)*cos(q0))))+sin(f*q3)*(cos(q2)*(cos(q1)*(sin(R)*sin(Y)-cos(R)*cos(Y)*sin(P))+sin(q1)*(sin(q0)*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))-cos(P)*cos(R)*cos(q0)))-sin(q2)*(sin(q1)*(sin(R)*sin(Y)-cos(R)*cos(Y)*sin(P))-cos(q1)*(sin(q0)*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))-cos(P)*cos(R)*cos(q0)))))+d4*(cos(q2)*(sin(q1)*(sin(R)*sin(Y)-cos(R)*cos(Y)*sin(P))-cos(q1)*(sin(q0)*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))-cos(P)*cos(R)*cos(q0)))+sin(q2)*(cos(q1)*(sin(R)*sin(Y)-cos(R)*cos(Y)*sin(P))+sin(q1)*(sin(q0)*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))-cos(P)*cos(R)*cos(q0))))+L*(sin(R)*sin(Y)-cos(R)*cos(Y)*sin(P))+W*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))+d3*(sin(q1)*(sin(R)*sin(Y)-cos(R)*cos(Y)*sin(P))-cos(q1)*(sin(q0)*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))-cos(P)*cos(R)*cos(q0)))+d0*(sin(R)*sin(Y)-cos(R)*cos(Y)*sin(P))+d1*(cos(q0)*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))+cos(P)*cos(R)*sin(q0))+d2*(cos(q0)*(cos(Y)*sin(R)+cos(R)*sin(P)*sin(Y))+cos(P)*cos(R)*sin(q0))+H*cos(P)*cos(R);
+    L0 << d0, 0, 0;    
+    L1 << 0, d1, 0;    
+    L2 << 0, d2, 0;    
+    L3 << 0, 0, d3;    
+    L4 << 0, 0, d4;    
+    L5 << 0, 0, d5;
 
+    vone << 0, 0, 0, 1; 
+
+    Eigen::Matrix4d T01, T12, T23, T34, T45, T56, T67, T78;
+    Eigen::Matrix4d T02, T03, T04, T05, T06, T07, T08;
+
+    T01 << RotateYaw(Y)*RotatePitch(P)*RotateRoll(R), Rcom, vone.transpose();
+    T12 << RotateRoll(q0), Rhip, vone.transpose();
+    T23 << Eigen::MatrixXd::Identity(3,3), L0, vone.transpose();
+    T34 << RotatePitch(q1), L1, vone.transpose();
+    T45 << Eigen::MatrixXd::Identity(3,3), L2, vone.transpose();
+    T56 << RotatePitch(q2), L3, vone.transpose();
+    T67 << RotatePitch(q3), L4, vone.transpose();
+    T78 << Eigen::MatrixXd::Identity(3,3), L5, vone.transpose();
+
+    // T01 = (T01);
+    // T02 = (T01*T12);
+    // T03 = (T01*T12*T23);
+    // T04 = (T01*T12*T23*T34);
+    // T05 = (T01*T12*T23*T34*T45);
+    // T06 = (T01*T12*T23*T34*T45*T56);
+    // T07 = (T01*T12*T23*T34*T45*T56*T67);
+    T08 = (T01*T12*T23*T34*T45*T56*T67*T78);
+
+    P7(0) = T08(0,3);
+    P7(1) = T08(1,3);
+    P7(2) = T08(2,3);
+    
     return P7;
 }
 

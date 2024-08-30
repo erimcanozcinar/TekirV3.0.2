@@ -721,13 +721,16 @@ void trajectory::comTrajectory2(double RealTime, double Ts, double Td, int Nphas
         
     /* #region: Xcom parameters */
     Strx = comVel(0)*(Ts+Td);
+    double Cx0 = Strx - comVel(0)*Ts*0.5;
     /* #endregion: Xcom parameters */
 
     /* #region: Ycom parameters */
     Stry = comVel(1)*(Ts+Td);
+    double Cy0 = Stry - comVel(1)*Ts*0.5;
     /* #endregion: Ycom parameters */
     
     /* #region: Yaw */
+    double dyaw = yaw/(Ts+Td);
     offsetPf_LF << + Pfx_offset_fr, + Pfy_offset + LatOut, Pfz_offset;
     offsetPf_RF << + Pfx_offset_fr, - Pfy_offset - LatOut, Pfz_offset;
     offsetPf_LB << - Pfx_offset_bc, + Pfy_offset + LatOut, Pfz_offset;
@@ -749,63 +752,31 @@ void trajectory::comTrajectory2(double RealTime, double Ts, double Td, int Nphas
         Cy = 0; dCy = 0; ddCy = 0;
         trajComYaw.setZero();
     }
-    else if (FuncInterval(RealTime, t1, t2, dt) == true) // Initialize CoM position (First half step)
+    else if (FuncInterval(RealTime, t1, tstart_w, dt) == true) // Initialize CoM position (First half step)
     {
-        trajComX = FuncPoly5th(RealTime, 0, Ts+Td, 0, 0, 0, Strx - comVel(0)*Ts*0.5, comVel(0), 0);
-        trajComY = FuncPoly5th(RealTime, 0, Ts+Td, 0, 0, 0, Stry - comVel(1)*Ts*0.5, comVel(1), 0);
+        trajComX = FuncPoly5th(RealTime, t1, tstart_w, 0, 0, 0, Cx0, comVel(0), 0);
+        trajComY = FuncPoly5th(RealTime, t1, tstart_w, 0, 0, 0, Cy0, comVel(1), 0);
         Cx = trajComX(0); dCx = trajComX(1); ddCx = trajComX(2);
         Cy = trajComY(0); dCy = trajComY(1); ddCy = trajComY(2);
         trajComYaw.setZero();
     }
-    else if (FuncInterval(RealTime, t2, tstart_w, dt) == true) // Initialite CoM trajectory (Just before walking starts)
-    {
-        trajComX = FuncPoly5th(RealTime, t2, tstart_w, Cxd, dCx0, -ddCx0, Cxd0, dCx0, ddCx0);
-        trajComY = FuncPoly5th(RealTime, t2, tstart_w, Cyd, dCy0, -ddCy0, Cyd0, dCy0, ddCy0);
-        Cx = trajComX(0); dCx = trajComX(1); ddCx = trajComX(2);
-        Cy = trajComY(0); dCy = trajComY(1); ddCy = trajComY(2);
-        trajComYaw = FuncPoly5th(RealTime, t2, tstart_w, 0, 0, 0, 0, 0, 0);
-    }
     else if (FuncInterval(RealTime, tstart_w, tend_w, dt) == true) // Start walking
     {
-        double Rt = RealTime - tstart_w - (Ts + Td) * (k);
-        if (FuncInterval(Rt, 0, Ts, dt) == true) // Single Support Phase
-        {
-            double s_T = Rt;
-            Cx = (Cx0 - px) * cosh(w * s_T) + (dCx0 / w) * sinh(w * s_T) + px;
-            dCx = w * (Cx0 - px) * sinh(w * s_T) + dCx0 * cosh(w * s_T);
-            ddCx = w * w * (Cx0 - px) * cosh(w * s_T) + w * dCx0 * sinh(w * s_T);
-            Cy = (Cy0 - py) * cosh(w * s_T) + (dCy0 / w) * sinh(w * s_T) + py;
-            dCy = w * (Cy0 - py) * sinh(w * s_T) + dCy0 * cosh(w * s_T);
-            ddCy = w * w * (Cy0 - py) * cosh(w * s_T) + w * dCy0 * sinh(w * s_T);
-            Cx = Cx + (k + 1) * Strx / 2;
-            Cy = Cy + (k + 1) * Stry / 2;
-            trajComYaw << yaw*k; 0; 0;
-            Cyaw = trajComYaw(0);
-        }
-        else if (FuncInterval(Rt, Ts, Ts + Td, dt) == true) // Double Support Phase
-        {
-            double d_T = Rt - Ts;
-            Cx = (d_Cx0 - px) * cosh(w * d_T) + ((d_dCx0 - Kx) / w) * sinh(w * d_T) + Kx * d_T + px;
-            dCx = w * (d_Cx0 - px) * sinh(w * d_T) + (d_dCx0 - Kx) * cosh(w * d_T) + Kx;
-            ddCx = w * w * (d_Cx0 - px) * cosh(w * d_T) + w * (d_dCx0 - Kx) * sinh(w * d_T);
-            Cy = (d_Cy0 - py) * cosh(w * d_T) + ((d_dCy0 - Ky) / w) * sinh(w * d_T) + Ky * d_T + py;
-            dCy = w * (d_Cy0 - py) * sinh(w * d_T) + (d_dCy0 - Ky) * cosh(w * d_T) + Ky;
-            ddCy = w * w * (d_Cy0 - py) * cosh(w * d_T) + w * (d_dCy0 - Ky) * sinh(w * d_T);
-            Cx = Cx + (k + 1) * Strx / 2;
-            Cy = Cy + (k + 1) * Stry / 2;
-            
-            trajComYaw = FuncPoly5th(Rt, Ts, Ts+Td, yaw*k, 0, 0, yaw*(k+1), 0, 0);
-            Cyaw = trajComYaw(0);
-        }
+        double Rt = RealTime - tstart_w - Ts*0.5;
+        Cx = Strx + comVel(0)*Rt;  dCx = comVel(0);  ddCx = 0;
+        Cy = Stry + comVel(1)*Rt;  dCy = comVel(1);  ddCy = 0;
+        trajComYaw(0) = yaw*0.5 + dyaw*(Rt-Td*0.5); trajComYaw(1) = dyaw; trajComYaw(2) = 0; 
+        Cyaw = trajComYaw(0);
     }
-    else if (FuncInterval(RealTime, tend_w, t3, dt) == true) // Stop CoM trajectory(After walking ends)
+    else if (FuncInterval(RealTime, tend_w, t3+Td, dt) == true) // Stop CoM trajectory(After walking ends)
     {
-        double PosX_start = Cxd0 + (k + 1) * Strx / 2;
-        double PosX_end = Strx / 2 + (k + 1) * Strx / 2;
-        double PosY_start = Cyd0 + (k + 1) * Stry / 2;
-        double PosY_end = Stry / 2 + (k + 1) * Stry / 2;
-        trajComX = FuncPoly5th(RealTime,  tend_w,  t3,  PosX_start,  dCx0,  ddCx0, PosX_end, 0, 0);
-        trajComY = FuncPoly5th(RealTime,  tend_w,  t3,  PosY_start,  dCy0,  ddCy0, PosY_end, 0, 0);
+        double Rt = (Ts+Td)*(Nphase) - Ts*0.5;
+        double PosX_start = Strx + comVel(1)*Rt;
+        double PosX_end = Strx*(Nphase+1);
+        double PosY_start = Stry + comVel(2)*Rt;
+        double PosY_end = Stry*(Nphase+1);
+        trajComX = FuncPoly5th(RealTime,  tend_w,  t3+Td,  PosX_start,  comVel(0),  0, PosX_end, 0, 0);
+        trajComY = FuncPoly5th(RealTime,  tend_w,  t3+Td,  PosY_start,  comVel(1),  0, PosY_end, 0, 0);
         Cx = trajComX(0); dCx = trajComX(1); ddCx = trajComX(2);
         Cy = trajComY(0); dCy = trajComY(1); ddCy = trajComY(2);
 
@@ -814,8 +785,8 @@ void trajectory::comTrajectory2(double RealTime, double Ts, double Td, int Nphas
     }
     else
     {
-        Cx = Strx / 2 + (k + 1) * Strx / 2; dCx = 0; ddCx = 0;
-        Cy = Stry / 2 + (k + 1) * Stry / 2; dCy = 0; ddCy = 0;
+        Cx = Strx*(Nphase+1); dCx = 0; ddCx = 0;
+        Cy = Stry*(Nphase+1); dCy = 0; ddCy = 0;
         trajComYaw << yaw*(k+1); 0; 0;
         Cyaw = trajComYaw(0);
     }    
@@ -825,6 +796,8 @@ void trajectory::comTrajectory2(double RealTime, double Ts, double Td, int Nphas
     /* #endregion: CoM Trajectory End */
 
     /* #region: Feet Trajectory */
+    Strx = 2*Strx;
+    Stry = 2*Stry;
     if (FuncInterval(RealTime, t0, t1, dt) == true) // Put robot on the ground
     {
         Footx_LF.setZero(); Footy_LF.setZero(); Footz_LF.setZero();       
@@ -1051,7 +1024,6 @@ void trajectory::comTrajectory2(double RealTime, double Ts, double Td, int Nphas
    
 }
 
-
 void trajectory::trajGeneration(double RealTime, bool walkEnable, double command_Vx, double command_Vy, double command_Yaw, double height, double dt)
 {   
 
@@ -1086,13 +1058,13 @@ void trajectory::trajGeneration(double RealTime, bool walkEnable, double command
         if((Vx_mean > prev_vx_mean) && AreDoubleSame(prev_vx_mean,0.0)) w_start_time = RealTime;
         if(AreDoubleSame(Footz_RF(0),Fc)){
             w_start_time = RealTime - Ts - Td - Ts*0.5;
-            comTrajectory(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, Yaw_mean, height, Fc, dt);
+            comTrajectory2(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, Yaw_mean, height, Fc, dt);
             if(prev_vx_mean != Vx_mean) Comx -= Strx*0.5;
             if(prev_vy_mean != Vy_mean) Comy -= Stry*0.5;
             if(prev_Yaw_mean != Yaw_mean) ComYaw -= Cyaw;
         }else if(AreDoubleSame(Footz_LF(0),Fc)){
             w_start_time = RealTime - Ts - Td - Ts - Td - Ts*0.5;
-            comTrajectory(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, Yaw_mean, height, Fc, dt);
+            comTrajectory2(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, Yaw_mean, height, Fc, dt);
             if(prev_vx_mean != Vx_mean) Comx -= Strx;
             if(prev_vy_mean != Vy_mean) Comy -= Stry;
             if(prev_Yaw_mean != Yaw_mean) ComYaw -= Cyaw;
@@ -1111,7 +1083,7 @@ void trajectory::trajGeneration(double RealTime, bool walkEnable, double command
     }
 
     
-    comTrajectory(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, Yaw_mean, height, Fc, dt);
+    comTrajectory2(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, Yaw_mean, height, Fc, dt);
     Zc = height;
     Xc = Cx+Comx; Yc = Cy+Comy; 
     dXc = dCx; dYc = dCy; 
