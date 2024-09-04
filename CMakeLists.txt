@@ -16,4 +16,5 @@ target_include_directories(tekirV3 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 target_link_libraries(tekirV3 PRIVATE "liballegro.so" 
                                       "liballegro_primitives.so" 
-                                      "liballegro_dialog.so")
+                                      "liballegro_dialog.so"
+                                      "libosqp.so")

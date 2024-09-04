@@ -672,19 +672,20 @@ Eigen::Matrix<double, 4, 3> VMC(const Eigen::Vector3d& Rcf1, const Eigen::Vector
     Eigen::VectorXd F(12);
     F.setZero();
 
-    // if(Fc_LF(2) > 0 || Fc_RB(2) > 0) { contactState_L = 1; }
-    // else { contactState_L = 0; }
-    // if(Fc_RF(2) > 0 || Fc_LB(2) > 0) { contactState_R = 1; }
-    // else { contactState_R = 0; }
+    if(Fc_LF(2) > 20 || Fc_RB(2) > 20) { contactState_L = 1; }
+    else { contactState_L = 0; }
+    if(Fc_RF(2) > 20 || Fc_LB(2) > 20) { contactState_R = 1; }
+    else { contactState_R = 0; }
 
-    if(Rcf1(2) > 0) { contactState_L = 0; }
-    else { contactState_L = 1; }
-    if(Rcf2(2) > 0) { contactState_R = 0; }
-    else { contactState_R = 1; }
+    // if(Rcf1(2)+0.01792 > 0) { contactState_L = 0; }
+    // else { contactState_L = 1; }
+    // if(Rcf2(2)+0.01792 > 0) { contactState_R = 0; }
+    // else { contactState_R = 1; }
 
     P << Eigen::MatrixXd::Identity(3,3)*contactState_L, Eigen::MatrixXd::Identity(3,3)*contactState_R, Eigen::MatrixXd::Identity(3,3)*contactState_R, Eigen::MatrixXd::Identity(3,3)*contactState_L,
          vec2SkewSym(Rcf1)*contactState_L, vec2SkewSym(Rcf2)*contactState_R, vec2SkewSym(Rcf3)*contactState_R, vec2SkewSym(Rcf4)*contactState_L;
     F = P.completeOrthogonalDecomposition().solve(C);
+    // F = P.fullPivLu().solve(C);
     
     F1x = F(0); F2x = F(3); F3x = F(6); F4x = F(9);
     F1y = F(1); F2y = F(4); F3y = F(7); F4y = F(10);
@@ -715,14 +716,10 @@ double SolveQuadCosSin(double ann, double bnn, double cnn, int mu)
     // Out = atan2(((cnn * bnn + mu * ann * sqrt(bnn ^ 2 - hnn))), hnn);
 }
 
-Eigen::Vector3d fullBodyFK(Eigen::Vector3d torsoOrient, Eigen::Vector3d Rcom, Eigen::Vector3d Q, int u)
+Eigen::Vector3d fullBodyFK(Eigen::Matrix3d torsoOrient, Eigen::Vector3d Rcom, Eigen::Vector3d Q, int u)
 {
     int m, n, f;
     double L, W, H;
-
-    double R = torsoOrient(0);
-    double P = torsoOrient(1);
-    double Y = torsoOrient(2);
 
     double Xc = Rcom(0);
     double Yc = Rcom(1);
@@ -766,8 +763,9 @@ Eigen::Vector3d fullBodyFK(Eigen::Vector3d torsoOrient, Eigen::Vector3d Rcom, Ei
         break;
     }
 
-    Eigen::Vector3d Rhip;
+    Eigen::Vector3d Rhip,Rcom2hip;
     Rhip << L, W, H;
+    Rcom2hip = Rhip - Rcom;
 
     double q0 = m*Q(0);
     double q1 = n*Q(1);
@@ -796,7 +794,7 @@ Eigen::Vector3d fullBodyFK(Eigen::Vector3d torsoOrient, Eigen::Vector3d Rcom, Ei
     Eigen::Matrix4d T01, T12, T23, T34, T45, T56, T67, T78;
     Eigen::Matrix4d T02, T03, T04, T05, T06, T07, T08;
 
-    T01 << RotateYaw(Y)*RotatePitch(P)*RotateRoll(R), Rcom, vone.transpose();
+    T01 << torsoOrient, Rcom, vone.transpose();
     T12 << RotateRoll(q0), Rhip, vone.transpose();
     T23 << Eigen::MatrixXd::Identity(3,3), L0, vone.transpose();
     T34 << RotatePitch(q1), L1, vone.transpose();
@@ -919,6 +917,22 @@ Eigen::Vector3d fullBodyIKan(Eigen::Vector3d Rfoot, Eigen::Vector3d Rcom, Eigen:
     return Q;
 }
 
+Eigen::Vector3d balanceControl(Eigen::Matrix3d Rd, Eigen::Matrix3d R)
+{
+    Eigen::Matrix3d Re, angleSkw;
+    Eigen::Vector3d angles;
+    double thetha;
+    Re = Rd*R.transpose();
+
+    // thetha = acos((Re.trace() - 1)*0.5);
+    // angleSkw = (Re - Re.transpose())*thetha/(2*sin(thetha));
+
+    angleSkw = Re.log();
+
+    angles << angleSkw(2,1), angleSkw(0,2), angleSkw(1,0);
+    return angles;
+}
+
 /* Inverse Dynamics */
 Eigen::Matrix3d quat2Rotmat(double qw, double qx, double qy, double qz)
 {
@@ -962,7 +976,7 @@ Eigen::Vector3d funcNewtonEuler(Eigen::Vector3d rootAbsAcc, Eigen::Matrix3d root
     double m3 = 0.21; // Knee FE 2 Ankle
     double m4 = 0;
     Eigen::Vector3d gravityVec;
-    gravityVec << 0, 0, -9.81;
+    gravityVec << 0, 0, GRAVITY;
 
     double m, n, k;
     switch (legIndex) {
@@ -1012,49 +1026,53 @@ Eigen::Vector3d funcNewtonEuler(Eigen::Vector3d rootAbsAcc, Eigen::Matrix3d root
     Jacc2 << 0, ddq2, 0;
     Jacc3 << 0, 0, 0;
 
+    // Link center of mass positions wrt previous joint
+    Pc0 << 0.00145, 0.003271, 0.01792;
+    // Pc1 << m*(0.075283), n*(-0.015862), -0.000015;  //
+    Pc1 << m*(0.003717), n*(-0.015862), -0.000015;
+    Pc2 << m*(-0.003917), n*(0.076506), -0.013793;  // thigh
+    Pc3 << m*(-0.015346), n*(-0.000102), -0.186842; // shank
+    Pc4 = 0.5 * P45;
+
     // Joint position wrt previous joint
     P01 << m*0.3102, n*0.105, 0.002;
     P12 << m*0.079, n*0.0262, 0.0;
     P23 << m*0.0, n*0.1102, -0.27;
     P34 << m*0.0, n*0.0, -0.224282;
     P45 << m*0, n*0, -0.107131;
-    //P45 << m * sin(q3)*(-0.066), n * 0, cos(q3)*(-0.066);
-
-    // Link center of mass positions wrt previous joint
-    Pc0 << 0.000492378,0,0;
-    Pc1 << m*(0.075283), n*(-0.015862), -0.000015;
-    Pc2 << m*(-0.003917), n*(0.076506), -0.013793;
-    Pc3 << m*(-0.015346), n*(-0.000102), -0.186842;
-    Pc4 = 0.5 * P45;
+    //P45 << m * sin(q3)*(-0.066), n * 0, cos(q3)*(-0.066);    
 
     // Link inertia
-    Inertia0 << 0.410, 0, 0,
-                0, 0.908, 0,
-                0, 0, 1.192;
-    Inertia1 << 0.003, 0, 0,
-                0, 0.003, 0,
-                0, 0, 0.003;
-    Inertia2 << 0.008, 0, 0,
-                0, 0.007, 0,
-                0, 0, 0.004;
-    Inertia3 << 0.002, 0, 0,
-                0, 0.002, 0,
-                0, 0, 1.086e-4;
-    Inertia4 << 0.0, 0.0, 0.0,
-                0.0, 0.0, 0.0,
-                0.0, 0.0, 0.0;
-    // Inertia1 << 0.003, 9.851e-5, -1.213e-6,
-    //             9.851e-5, 0.003, -1.327e-6,
-    //             -1.213e-6, -1.327e-6, 0.003;
-    // Inertia2 << 0.008, -1.818e-4, 5.307e-4,
-    //             -1.818e-4, 0.007, 0.001,
-    //             5.307e-4, 0.001, 0.004;
-    // Inertia3 << 0.002, -7.048e-7, -2.682e-4,
-    //             -7.048e-7, 0.002, -1.088e-5,
-    //             -2.682e-4, -1.088e-5, 1.086e-4;
+    // Inertia0 << 0.410, 0, 0,
+    //             0, 0.908, 0,
+    //             0, 0, 1.192;
+    // Inertia1 << 0.003, 0, 0,
+    //             0, 0.003, 0,
+    //             0, 0, 0.003;
+    // Inertia2 << 0.008, 0, 0,
+    //             0, 0.007, 0,
+    //             0, 0, 0.004;
+    // Inertia3 << 0.002, 0, 0,
+    //             0, 0.002, 0,
+    //             0, 0, 1.086e-4;
     // Inertia4 << 0.0, 0.0, 0.0,
     //             0.0, 0.0, 0.0,
     //             0.0, 0.0, 0.0;
+    Inertia0 << 0.410, 0.003, -0.012,
+                0.003, 0.908, 0.007,
+                -0.012, 0.007, 1.192;
+    Inertia1 << 0.003, 9.851e-5, -1.213e-6,
+                9.851e-5, 0.003, -1.327e-6,
+                -1.213e-6, -1.327e-6, 0.003;
+    Inertia2 << 0.008, -1.818e-4, 5.307e-4,
+                -1.818e-4, 0.007, 0.001,
+                5.307e-4, 0.001, 0.004;
+    Inertia3 << 0.002, -7.048e-7, -2.682e-4,
+                -7.048e-7, 0.002, -1.088e-5,
+                -2.682e-4, -1.088e-5, 1.086e-4;
+    Inertia4 << 0.0, 0.0, 0.0,
+                0.0, 0.0, 0.0,
+                0.0, 0.0, 0.0;
 
     RG0 = rootOrient;
     R01 = RotateRoll(q0);

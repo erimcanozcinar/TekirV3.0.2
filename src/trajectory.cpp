@@ -409,7 +409,7 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
             ddCy = w * w * (Cy0 - py) * cosh(w * s_T) + w * dCy0 * sinh(w * s_T);
             Cx = Cx + (k + 1) * Strx / 2;
             Cy = Cy + (k + 1) * Stry / 2;
-            trajComYaw << yaw*k; 0; 0;
+            trajComYaw << yaw*k, 0, 0;
             Cyaw = trajComYaw(0);
         }
         else if (FuncInterval(Rt, Ts, Ts + Td, dt) == true) // Double Support Phase
@@ -446,7 +446,7 @@ void trajectory::comTrajectory(double RealTime, double Ts, double Td, int Nphase
     {
         Cx = Strx / 2 + (k + 1) * Strx / 2; dCx = 0; ddCx = 0;
         Cy = Stry / 2 + (k + 1) * Stry / 2; dCy = 0; ddCy = 0;
-        trajComYaw << yaw*(k+1); 0; 0;
+        trajComYaw << yaw*(k+1), 0, 0;
         Cyaw = trajComYaw(0);
     }    
 
@@ -787,7 +787,7 @@ void trajectory::comTrajectory2(double RealTime, double Ts, double Td, int Nphas
     {
         Cx = Strx*(Nphase+1); dCx = 0; ddCx = 0;
         Cy = Stry*(Nphase+1); dCy = 0; ddCy = 0;
-        trajComYaw << yaw*(k+1); 0; 0;
+        trajComYaw << yaw*(k+1), 0, 0;
         Cyaw = trajComYaw(0);
     }    
 

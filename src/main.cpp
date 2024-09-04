@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
     /* #region: Create Log file */
     FILE* fp0;
     FILE* fp1;
-    fp0 = fopen("/home/erim/RaiSim_Simulations/TekirV3.0.1/Log/dataLog.txt", "w");
+    fp0 = fopen("/home/erim/RaiSim_Simulations/TekirV3.0.2/Log/dataLog.txt", "w");
     /* #endregion */
 
     /* #region: Allegro */
@@ -35,9 +35,9 @@ int main(int argc, char** argv) {
     /* #endregion */
 
     /* #region: Init Eigen variables */
-    Itorso << 0.410, 0, 0,
-              0, 0.908, 0,
-              0, 0, 1.192;
+    Itorso << 0.410, 0.003, -0.012,
+              0.003, 0.908,  0.007,
+              -0.012, 0.007, 1.192;
 
     prevgenVelocity.setZero();
     dQ_LF.setZero(); dQ_RF.setZero(); dQ_LB.setZero(); dQ_RB.setZero();
@@ -165,8 +165,10 @@ int main(int argc, char** argv) {
         /* #endregion */        
          
         /* #region: DESIRED COM POSITION & ORIENTATION */
+        Eigen::Vector3d comcuk = quadruped->getCOM().e() - rootAbsposition;
         Pcom << traj.Xc, traj.Yc, traj.Zc;
-        Rcom <<traj.Xc, traj.Yc, 0;
+        Rcom << traj.Xc+0.00145, traj.Yc+0.003271, 0.01792;
+        // Rcom << comcuk(0), comcuk(1), comcuk(2)+traj.Zc;
         torsoRot << cmd_roll, cmd_pitch, traj.Yawc; // Torso Orientation
         /* #endregion */
 
@@ -193,36 +195,48 @@ int main(int argc, char** argv) {
         ddQ_RF << Numdiff(dQ_RF(0), pre_dQ_RF(0), dt), Numdiff(dQ_RF(1), pre_dQ_RF(1), dt), Numdiff(dQ_RF(2), pre_dQ_RF(2), dt);
         ddQ_LB << Numdiff(dQ_LB(0), pre_dQ_LB(0), dt), Numdiff(dQ_LB(1), pre_dQ_LB(1), dt), Numdiff(dQ_LB(2), pre_dQ_LB(2), dt);
         ddQ_RB << Numdiff(dQ_RB(0), pre_dQ_RB(0), dt), Numdiff(dQ_RB(1), pre_dQ_RB(1), dt), Numdiff(dQ_RB(2), pre_dQ_RB(2), dt);
+        RSINFO(Q_LF)
+        RSWARN(Q_LB)
         /* #endregion */
 
         /* #region: VMC CONTROLLER FOR TORSO */
-        Rf_LF = fullBodyFK(torsoRot, Rcom, Q_LF, 1);
-        Rf_RF = fullBodyFK(torsoRot, Rcom, Q_RF, 2);
-        Rf_LB = fullBodyFK(torsoRot, Rcom, Q_LB, 3);
-        Rf_RB = fullBodyFK(torsoRot, Rcom, Q_RB, 4);
+        Rf_LF = fullBodyFK(rootOrientation, Pcom, q_LF, 1);
+        Rf_RF = fullBodyFK(rootOrientation, Pcom, q_RF, 2);
+        Rf_LB = fullBodyFK(rootOrientation, Pcom, q_LB, 3);
+        Rf_RB = fullBodyFK(rootOrientation, Pcom, q_RB, 4);
 
         dtorsoRot << Numdiff(torsoRot(0), prev_torsoRot(0), dt), Numdiff(torsoRot(1), prev_torsoRot(1), dt), Numdiff(torsoRot(2), prev_torsoRot(2), dt);
         ddtorsoRot << Numdiff(dtorsoRot(0), prev_dtorsoRot(0), dt), Numdiff(dtorsoRot(1), prev_dtorsoRot(1), dt), Numdiff(dtorsoRot(2), prev_dtorsoRot(2), dt);
         prev_torsoRot = torsoRot;
         prev_dtorsoRot = dtorsoRot;
 
-        Fvmc(0) = 0*(traj.ddXc-genAcceleration(0)) + 0*(traj.dXc - genVelocity(0));
-        Fvmc(1) = 0*(traj.ddXc-genAcceleration(1)) + 0*(traj.dXc - genVelocity(1));
-        Fvmc(2) = 0*(traj.ddXc-genAcceleration(2)) + 0*(traj.dXc - genVelocity(2)) + MASS*GRAVITY;
-        Fvmc(3) = 3000*(torsoRot(0) - imuRot(0)) + 300*(dtorsoRot(0) - dimuRot(0));
-        Fvmc(4) = 3000*(torsoRot(1) - imuRot(1)) + 300*(dtorsoRot(1) - dimuRot(1));
-        Fvmc(5) = 3000*(torsoRot(2) - imuRot(2)) + 300*(dtorsoRot(2) - dimuRot(2));
+        Wbd << 0, 0, 0;
+        angleErr = balanceControl(quat2Rotmat(1,0,0,0), rootOrientation);
+        Kpw << 50, 0, 0,
+               0, 50, 0,
+               0, 0, 50;
+        Kdw = Kpw.sqrt();
+        Mvmc =  Itorso*(Kpw*angleErr + Kdw*(Wbd - rootAngvelocity));
+
+        Fvmc(0) = (0*MASS*traj.ddXc + 0*(traj.Xc-genCoordinates(0)) + sqrt(0)*(traj.dXc - genVelocity(0)));
+        Fvmc(1) = (0*MASS*traj.ddYc + 0*(traj.Yc-genCoordinates(1)) + sqrt(0)*(traj.dYc - genVelocity(1)));
+        Fvmc(2) = (0*(traj.Zc-genCoordinates(2)) + sqrt(0)*(0 - genVelocity(2)) + MASS*GRAVITY);
+        Fvmc(3) = Mvmc(0);
+        Fvmc(4) = Mvmc(1);
+        Fvmc(5) = Mvmc(2);
+        // RSINFO(Rf_LF-Rcom);
         
-        // Fmatrix = VMC(Rf_LF, Rf_RF, Rf_LB, Rf_RB, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
-        Fmatrix = VMC(traj.Pfoot_LF-Rcom, traj.Pfoot_RF-Rcom, traj.Pfoot_LB-Rcom, traj.Pfoot_RB-Rcom, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
+        Fmatrix = VMC(Rf_LF-Rcom, Rf_RF-Rcom, Rf_LB-Rcom, Rf_RB-Rcom, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
+        // Fmatrix = VMC(traj.Pfoot_LF-Rcom, traj.Pfoot_RF-Rcom, traj.Pfoot_LB-Rcom, traj.Pfoot_RB-Rcom, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
         F1cont << Fmatrix(0, 0), Fmatrix(0, 1), Fmatrix(0, 2);
         F2cont << Fmatrix(1, 0), Fmatrix(1, 1), Fmatrix(1, 2);
         F3cont << Fmatrix(2, 0), Fmatrix(2, 1), Fmatrix(2, 2);
         F4cont << Fmatrix(3, 0), Fmatrix(3, 1), Fmatrix(3, 2);
+
         /* #endregion */
         
         /* #region: INVERSE DYNAMICS */
-        jffTorques = funNewtonEuler4Leg(rootAbsacceleration, rootOrientation, rootAngvelocity, rootAngacceleration, jPositions, jVelocities, jAccelerations, F1cont, F2cont, F3cont, F4cont);
+        jffTorques = funNewtonEuler4Leg(rootAbsacceleration, rootOrientation, rootAngvelocity, rootAngacceleration, jPositions, jVelocities, jAccelerations, 0*F1cont, 0*F2cont, 0*F3cont, 0*F4cont);
         /* #endregion */
 
         /* #region: INVERSE DYNAMICS WITH RAISIM*/
@@ -251,7 +265,6 @@ int main(int argc, char** argv) {
         }
         /* #endregion */
 
-
         /* #region: SEND COMMEND TO THE ROBOT */
         F << 0, 0, 0, 0, 0, 0, Tau_LF(0), Tau_LF(1), Tau_LF(2), Tau_RF(0), Tau_RF(1), Tau_RF(2), Tau_LB(0), Tau_LB(1), Tau_LB(2), Tau_RB(0), Tau_RB(1), Tau_RB(2);
         quadruped->setGeneralizedForce(F);
@@ -276,7 +289,8 @@ int main(int argc, char** argv) {
 
         /* Log data (fp0:NewtonEulerTorques, fp1:PD_torques, fp2: InvDynTorques ) */
         // fprintf(fp0, "%f %f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.Pfoot_RF(0), traj.Pfoot_RF(2), traj.Pfoot_LF(0), traj.Pfoot_LF(2), traj.Yawc/2, traj.ComYaw/2, traj.aa_LF(0));
-        fprintf(fp0, "%f %f %f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.Footx_LF(0)-traj.Xc, traj.Footy_LF(0), traj.Footz_LF(0), Q_LB(2), dQ_RF(1), dQ_RF(2), dQ_LB(1), dQ_LB(2));
+        // fprintf(fp0, "%f %f %f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.Footx_LF(0)-traj.Xc, traj.Footy_LF(0), traj.Footz_LF(0), Q_LB(2), dQ_RF(1), dQ_RF(2), dQ_LB(1), dQ_LB(2));
+        fprintf(fp0, "%f %f %f %f %f %f %f %f %f %f %f\n", t, imuRot(0), imuRot(1), imuRot(2), rootAngvelocity(0), rootAngvelocity(1), rootAngvelocity(2), Mvmc(0), Mvmc(1), Mvmc(2), F4cont(2));
         // fprintf(fp0, "%f %f %f %f %f %f %f %f %f\n", t, traj.Xc, traj.localStr_LF(0), traj.localStr_LF(1), traj.Footz_R(0), traj.Footx_L(0), traj.Footy_L(0), traj.Footz_L(0), traj.Yaw);
         
     }

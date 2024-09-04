@@ -537,7 +537,7 @@
      <inertia ixx="0.002"  ixy="-7.048e-7"  ixz="-2.682e-4" iyy="0.002" iyz="-1.088e-5" izz="1.086e-4" />
     </inertial>
 	<visual>
-     <origin xyz="0 0 0" rpy="0 0 -1.57079632679" />
+     <origin xyz="0 0 0" rpy="0 0 1.57079632679" />
      <geometry>
        <!--<box size="0.04 0.026 0.224282"/>-->
        <mesh filename="/home/erim/RaiSim_Simulations/TekirV3.0.1/rsc/mesh2/shank.stl" scale="0.001 0.001 0.001"/>
@@ -559,7 +559,7 @@
      <inertia ixx="0.002"  ixy="-7.048e-7"  ixz="-2.682e-4" iyy="0.002" iyz="-1.088e-5" izz="1.086e-4" />
     </inertial>
 	<visual>
-     <origin xyz="0 0 0" rpy="0 0 -1.57079632679" />
+     <origin xyz="0 0 0" rpy="0 0 1.57079632679" />
      <geometry>
        <!--<box size="0.04 0.026 0.224282"/>-->
        <mesh filename="/home/erim/RaiSim_Simulations/TekirV3.0.1/rsc/mesh2/shank.stl" scale="0.001 0.001 0.001"/>
@@ -961,14 +961,14 @@
     <parent link="shank_lb"/>
     <child link="footLink_lb"/>
     <axis xyz="0 0 0"/>
-    <origin xyz="0 0 -0.224282" rpy="0 -0.52359877559 0"/>
+    <origin xyz="0 0 -0.224282" rpy="0 0.52359877559 0"/>
   </joint>
   
   <joint name="footLinkFrame_rb" type="fixed">
     <parent link="shank_rb"/>
     <child link="footLink_rb"/>
     <axis xyz="0 0 0"/>
-    <origin xyz="0 0 -0.224282" rpy="0 -0.52359877559 0"/>
+    <origin xyz="0 0 -0.224282" rpy="0 0.52359877559 0"/>
   </joint>
   
   <joint name="footFrame_lf" type="fixed">
