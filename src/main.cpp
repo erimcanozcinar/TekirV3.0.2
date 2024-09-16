@@ -167,7 +167,7 @@ int main(int argc, char** argv) {
         /* #region: DESIRED COM POSITION & ORIENTATION */
         Eigen::Vector3d comcuk = quadruped->getCOM().e() - rootAbsposition;
         Pcom << traj.Xc, traj.Yc, traj.Zc;
-        Rcom << traj.Xc+0.00145, traj.Yc+0.003271, 0.01792;
+        Rcom << -0.00145, 0.003271, -0.01792;
         // Rcom << comcuk(0), comcuk(1), comcuk(2)+traj.Zc;
         torsoRot << cmd_roll, cmd_pitch, traj.Yawc; // Torso Orientation
         /* #endregion */
@@ -195,15 +195,13 @@ int main(int argc, char** argv) {
         ddQ_RF << Numdiff(dQ_RF(0), pre_dQ_RF(0), dt), Numdiff(dQ_RF(1), pre_dQ_RF(1), dt), Numdiff(dQ_RF(2), pre_dQ_RF(2), dt);
         ddQ_LB << Numdiff(dQ_LB(0), pre_dQ_LB(0), dt), Numdiff(dQ_LB(1), pre_dQ_LB(1), dt), Numdiff(dQ_LB(2), pre_dQ_LB(2), dt);
         ddQ_RB << Numdiff(dQ_RB(0), pre_dQ_RB(0), dt), Numdiff(dQ_RB(1), pre_dQ_RB(1), dt), Numdiff(dQ_RB(2), pre_dQ_RB(2), dt);
-        RSINFO(Q_LF)
-        RSWARN(Q_LB)
         /* #endregion */
 
         /* #region: VMC CONTROLLER FOR TORSO */
-        Rf_LF = fullBodyFK(rootOrientation, Pcom, q_LF, 1);
-        Rf_RF = fullBodyFK(rootOrientation, Pcom, q_RF, 2);
-        Rf_LB = fullBodyFK(rootOrientation, Pcom, q_LB, 3);
-        Rf_RB = fullBodyFK(rootOrientation, Pcom, q_RB, 4);
+        Rf_LF = fullBodyFK(rootOrientation, 0*Pcom, q_LF, 1);
+        Rf_RF = fullBodyFK(rootOrientation, 0*Pcom, q_RF, 2);
+        Rf_LB = fullBodyFK(rootOrientation, 0*Pcom, q_LB, 3);
+        Rf_RB = fullBodyFK(rootOrientation, 0*Pcom, q_RB, 4);
 
         dtorsoRot << Numdiff(torsoRot(0), prev_torsoRot(0), dt), Numdiff(torsoRot(1), prev_torsoRot(1), dt), Numdiff(torsoRot(2), prev_torsoRot(2), dt);
         ddtorsoRot << Numdiff(dtorsoRot(0), prev_dtorsoRot(0), dt), Numdiff(dtorsoRot(1), prev_dtorsoRot(1), dt), Numdiff(dtorsoRot(2), prev_dtorsoRot(2), dt);
@@ -215,7 +213,10 @@ int main(int argc, char** argv) {
         Kpw << 50, 0, 0,
                0, 50, 0,
                0, 0, 50;
-        Kdw = Kpw.sqrt();
+        Kdw << sqrt(50), 0, 0,
+               0, sqrt(50), 0,
+               0, 0, sqrt(50);
+        // Kdw = Kpw.sqrt();
         Mvmc =  Itorso*(Kpw*angleErr + Kdw*(Wbd - rootAngvelocity));
 
         Fvmc(0) = (0*MASS*traj.ddXc + 0*(traj.Xc-genCoordinates(0)) + sqrt(0)*(traj.dXc - genVelocity(0)));
@@ -224,10 +225,11 @@ int main(int argc, char** argv) {
         Fvmc(3) = Mvmc(0);
         Fvmc(4) = Mvmc(1);
         Fvmc(5) = Mvmc(2);
-        // RSINFO(Rf_LF-Rcom);
+        RSINFO(comcuk);
         
         Fmatrix = VMC(Rf_LF-Rcom, Rf_RF-Rcom, Rf_LB-Rcom, Rf_RB-Rcom, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
         // Fmatrix = VMC(traj.Pfoot_LF-Rcom, traj.Pfoot_RF-Rcom, traj.Pfoot_LB-Rcom, traj.Pfoot_RB-Rcom, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
+        // Fmatrix = refForceCalc4(Rf_LF, Rf_RF, Rf_LB, Rf_RB, Q_LF, Q_RF, Q_LB, Q_RB, dt);
         F1cont << Fmatrix(0, 0), Fmatrix(0, 1), Fmatrix(0, 2);
         F2cont << Fmatrix(1, 0), Fmatrix(1, 1), Fmatrix(1, 2);
         F3cont << Fmatrix(2, 0), Fmatrix(2, 1), Fmatrix(2, 2);
@@ -236,7 +238,7 @@ int main(int argc, char** argv) {
         /* #endregion */
         
         /* #region: INVERSE DYNAMICS */
-        jffTorques = funNewtonEuler4Leg(rootAbsacceleration, rootOrientation, rootAngvelocity, rootAngacceleration, jPositions, jVelocities, jAccelerations, 0*F1cont, 0*F2cont, 0*F3cont, 0*F4cont);
+        jffTorques = funNewtonEuler4Leg(rootAbsacceleration, rootOrientation, rootAngvelocity, rootAngacceleration, jPositions, jVelocities, jAccelerations, F1cont, F2cont, F3cont, F4cont);
         /* #endregion */
 
         /* #region: INVERSE DYNAMICS WITH RAISIM*/

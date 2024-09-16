@@ -685,7 +685,6 @@ Eigen::Matrix<double, 4, 3> VMC(const Eigen::Vector3d& Rcf1, const Eigen::Vector
     P << Eigen::MatrixXd::Identity(3,3)*contactState_L, Eigen::MatrixXd::Identity(3,3)*contactState_R, Eigen::MatrixXd::Identity(3,3)*contactState_R, Eigen::MatrixXd::Identity(3,3)*contactState_L,
          vec2SkewSym(Rcf1)*contactState_L, vec2SkewSym(Rcf2)*contactState_R, vec2SkewSym(Rcf3)*contactState_R, vec2SkewSym(Rcf4)*contactState_L;
     F = P.completeOrthogonalDecomposition().solve(C);
-    // F = P.fullPivLu().solve(C);
     
     F1x = F(0); F2x = F(3); F3x = F(6); F4x = F(9);
     F1y = F(1); F2y = F(4); F3y = F(7); F4y = F(10);
@@ -1027,11 +1026,10 @@ Eigen::Vector3d funcNewtonEuler(Eigen::Vector3d rootAbsAcc, Eigen::Matrix3d root
     Jacc3 << 0, 0, 0;
 
     // Link center of mass positions wrt previous joint
-    Pc0 << 0.00145, 0.003271, 0.01792;
-    // Pc1 << m*(0.075283), n*(-0.015862), -0.000015;  //
-    Pc1 << m*(0.003717), n*(-0.015862), -0.000015;
-    Pc2 << m*(-0.003917), n*(0.076506), -0.013793;  // thigh
-    Pc3 << m*(-0.015346), n*(-0.000102), -0.186842; // shank
+    Pc0 << -0.00145, 0.003271, -0.01792;
+    Pc1 << m*(0.075283), n*(-0.015862), -0.000015;  // link d0
+    Pc2 << m*(-0.003917), n*(0.076506), -0.013793;  // thigh  -0.003917 0.076506 -0.013793
+    Pc3 << m*(-0.015346), n*(-0.000102), -0.186842; // shank  -0.015346 -0.000102 -0.186842
     Pc4 = 0.5 * P45;
 
     // Joint position wrt previous joint
@@ -1181,7 +1179,7 @@ Eigen::Vector3d funcNewtonEuler(Eigen::Vector3d rootAbsAcc, Eigen::Matrix3d root
     n5 << 0, 0, 0;
     /*n5 = Rcon.cross(grForce);
     n5 = -RG5.transpose()*n5;*/
-    n4 = N4 + R45 * n5 + Pc4.cross(F4) + P45.cross(R45 * f5);
+    n4 = N4 + R45 * n5 + Pc4.cross(F4) + P45.cross(f5);
     n3 = N3 + R34 * n4 + Pc3.cross(F3) + P34.cross(R34 * f4);
     n2 = N2 + R23 * n3 + Pc2.cross(F2) + P23.cross(R23 * f3);
     n1 = N1 + R12 * n2 + Pc1.cross(F1) + P12.cross(R12 * f2);

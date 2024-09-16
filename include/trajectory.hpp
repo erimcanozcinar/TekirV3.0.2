@@ -61,9 +61,11 @@ class trajectory {
 
         // double Pfx_offset_fr = 0.36634099999999997221422631810128, Pfy_offset = 0.2414, Pfz_offset = 0;
         // double Pfx_offset_bc = 0.41205900000000000860111981637601;
-        double Pfx_offset_fr = 0.3892, Pfy_offset = 0.2414*1.65, Pfz_offset = 0; // 0.3892
+        double Pfx_offset_fr = 0.3892, Pfy_offset = 0.2414, Pfz_offset = 0; // 0.3892
         double Pfx_offset_bc = 0.3892;
-        double LatOut = 0.0;
+        double LatOut = 0.2414*0;
+        int left_lat_off = 1;
+        int right_lat_off = 1;
 
     public:
         double Xcop, Ycop;

@@ -731,10 +731,10 @@ void trajectory::comTrajectory2(double RealTime, double Ts, double Td, int Nphas
     
     /* #region: Yaw */
     double dyaw = yaw/(Ts+Td);
-    offsetPf_LF << + Pfx_offset_fr, + Pfy_offset + LatOut, Pfz_offset;
-    offsetPf_RF << + Pfx_offset_fr, - Pfy_offset - LatOut, Pfz_offset;
-    offsetPf_LB << - Pfx_offset_bc, + Pfy_offset + LatOut, Pfz_offset;
-    offsetPf_RB << - Pfx_offset_bc, - Pfy_offset - LatOut, Pfz_offset;
+    offsetPf_LF << + 0.3870 + 0*Pfx_offset_fr, + Pfy_offset + LatOut*left_lat_off, Pfz_offset;
+    offsetPf_RF << + 0.3824 + 0*Pfx_offset_fr, - Pfy_offset - LatOut*right_lat_off, Pfz_offset;
+    offsetPf_LB << - 0.3887 + 0*Pfx_offset_bc, + Pfy_offset + LatOut*right_lat_off, Pfz_offset;
+    offsetPf_RB << - 0.3898 + 0*Pfx_offset_bc, - Pfy_offset - LatOut*left_lat_off, Pfz_offset;
     yawStr_LF = (RotateYaw(yaw*(kx+1))*offsetPf_LF - offsetPf_LF);
     yawStr_RF = (RotateYaw(yaw*(kx+1))*offsetPf_RF - offsetPf_RF);
     yawStr_LB = (RotateYaw(yaw*(kx+1))*offsetPf_LB - offsetPf_LB);
@@ -807,6 +807,7 @@ void trajectory::comTrajectory2(double RealTime, double Ts, double Td, int Nphas
     }
     else if (FuncInterval(RealTime, t1, t2, dt) == true) // Feet trajectory initialization(First half step)
     {
+        left_lat_off = 0;
         Footx_LF = FuncPoly5th(RealTime, t1, t2, 0, 0, 0, Strx*0.5, 0, 0);
         Footy_LF = FuncPoly5th(RealTime, t1, t2, 0, 0, 0, Stry*0.5, 0, 0);
         Footz_LF = FuncPoly6th(RealTime, t1, t2, 0, 0, 0, 0, 0, 0, Fh);
@@ -880,6 +881,7 @@ void trajectory::comTrajectory2(double RealTime, double Ts, double Td, int Nphas
         }
         else // Right foot swing, left foot stand
         {
+            right_lat_off = 0;
             Pstart_LF << Strx*0.5 + Strx*kx + pre_yawStr_LF(0), Stry*0.5 + Stry*kx + pre_yawStr_LF(1), 0;
             Pend_LF << Strx*0.5 + Strx*kx + pre_yawStr_LF(0), Stry*0.5 + Stry*kx + pre_yawStr_LF(1), 0;
             Footx_LF = FuncPoly5th(RealTime, ts, ts + Ts, Pstart_LF(0), 0, 0, Pend_LF(0), 0, 0);
