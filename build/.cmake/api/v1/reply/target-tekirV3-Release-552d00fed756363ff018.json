@@ -152,11 +152,6 @@
 				"role" : "libraries"
 			},
 			{
-				"backtrace" : 4,
-				"fragment" : "-losqp",
-				"role" : "libraries"
-			},
-			{
 				"fragment" : "/home/erim/raisim_ws_v1.1.7/install/lib/libraisimPng.so",
 				"role" : "libraries"
 			},

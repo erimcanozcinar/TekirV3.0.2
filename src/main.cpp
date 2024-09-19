@@ -73,6 +73,8 @@ int main(int argc, char** argv) {
     quadruped->setGeneralizedCoordinate(initialConditions);
     /* #endregion */
 
+    quadruped->setComputeInverseDynamics(true);
+
     /* #region: Launch raisim server for visualization.Can be visualized on raisimUnity */
     raisim::RaisimServer server(&world);
     server.setMap("default");
@@ -80,6 +82,10 @@ int main(int argc, char** argv) {
     server.launchServer();
     raisim::MSLEEP(2000);
     /* #endregion */
+
+    Eigen::VectorXd torqueFromInverseDynamics(quadruped->getDOF());
+    torqueFromInverseDynamics.setZero();
+    jointTorques.setZero();
 
     while (!jStick.close) {
         RS_TIMED_LOOP(int(world.getTimeStep()*1e6));
@@ -167,7 +173,7 @@ int main(int argc, char** argv) {
         /* #region: DESIRED COM POSITION & ORIENTATION */
         Eigen::Vector3d comcuk = quadruped->getCOM().e() - rootAbsposition;
         Pcom << traj.Xc, traj.Yc, traj.Zc;
-        Rcom << -0.00145, 0.003271, -0.01792;
+        Rcom << 0.00145, 0.003271, 0.01792;
         // Rcom << comcuk(0), comcuk(1), comcuk(2)+traj.Zc;
         torsoRot << cmd_roll, cmd_pitch, traj.Yawc; // Torso Orientation
         /* #endregion */
@@ -210,22 +216,22 @@ int main(int argc, char** argv) {
 
         Wbd << 0, 0, 0;
         angleErr = balanceControl(quat2Rotmat(1,0,0,0), rootOrientation);
-        Kpw << 50, 0, 0,
+        Kpw << 500, 0, 0,
+               0, 500, 0,
+               0, 0, 500;
+        Kdw << 50, 0, 0,
                0, 50, 0,
                0, 0, 50;
-        Kdw << sqrt(50), 0, 0,
-               0, sqrt(50), 0,
-               0, 0, sqrt(50);
         // Kdw = Kpw.sqrt();
         Mvmc =  Itorso*(Kpw*angleErr + Kdw*(Wbd - rootAngvelocity));
 
-        Fvmc(0) = (0*MASS*traj.ddXc + 0*(traj.Xc-genCoordinates(0)) + sqrt(0)*(traj.dXc - genVelocity(0)));
-        Fvmc(1) = (0*MASS*traj.ddYc + 0*(traj.Yc-genCoordinates(1)) + sqrt(0)*(traj.dYc - genVelocity(1)));
-        Fvmc(2) = (0*(traj.Zc-genCoordinates(2)) + sqrt(0)*(0 - genVelocity(2)) + MASS*GRAVITY);
+        Fvmc(0) = (MASS*traj.ddXc + 50*(traj.Xc-genCoordinates(0)) + sqrt(50)*(traj.dXc - genVelocity(0)));
+        Fvmc(1) = (MASS*traj.ddYc + 50*(traj.Yc-genCoordinates(1)) + sqrt(50)*(traj.dYc - genVelocity(1)));
+        Fvmc(2) = (50*(traj.Zc-genCoordinates(2)) + sqrt(50)*(0 - genVelocity(2)) + MASS*GRAVITY);
         Fvmc(3) = Mvmc(0);
         Fvmc(4) = Mvmc(1);
-        Fvmc(5) = Mvmc(2);
-        RSINFO(comcuk);
+        Fvmc(5) = 0*Mvmc(2);
+        // RSINFO(comcuk);
         
         Fmatrix = VMC(Rf_LF-Rcom, Rf_RF-Rcom, Rf_LB-Rcom, Rf_RB-Rcom, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
         // Fmatrix = VMC(traj.Pfoot_LF-Rcom, traj.Pfoot_RF-Rcom, traj.Pfoot_LB-Rcom, traj.Pfoot_RB-Rcom, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
@@ -239,9 +245,17 @@ int main(int argc, char** argv) {
         
         /* #region: INVERSE DYNAMICS */
         jffTorques = funNewtonEuler4Leg(rootAbsacceleration, rootOrientation, rootAngvelocity, rootAngacceleration, jPositions, jVelocities, jAccelerations, F1cont, F2cont, F3cont, F4cont);
+        jffTorques2 = funNewtonEuler4Leg(rootAbsacceleration, rootOrientation, rootAngvelocity, rootAngacceleration, genCoordinates.tail(12), genVelocity.tail(12), genAcceleration.tail(12), Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB);
         /* #endregion */
 
         /* #region: INVERSE DYNAMICS WITH RAISIM*/
+        std::vector<Eigen::Vector3d> axes(quadruped->getDOF()-6);
+        for (int j=0; j<quadruped->getDOF()-6; j++)
+            axes[j] = quadruped->getJointAxis(j+1).e();
+
+        for (size_t j=1; j<quadruped->getDOF()-5; j++)
+            torqueFromInverseDynamics(j+5) = quadruped->getTorqueAtJointInWorldFrame(j).dot(axes[j-1]);
+        
         Tau1_JF = JacTranspose_LF(q_LF(0), q_LF(1), q_LF(2), 30*PI/180) * (rootOrientation.transpose() * F1cont);
         Tau2_JF = JacTranspose_RF(q_RF(0), q_RF(1), q_RF(2), -30*PI/180) * (rootOrientation.transpose() * F2cont);
         Tau3_JF = JacTranspose_LB(q_LB(0), q_LB(1), q_LB(2), 30*PI/180) * (rootOrientation.transpose() * F3cont);
@@ -270,6 +284,9 @@ int main(int argc, char** argv) {
         /* #region: SEND COMMEND TO THE ROBOT */
         F << 0, 0, 0, 0, 0, 0, Tau_LF(0), Tau_LF(1), Tau_LF(2), Tau_RF(0), Tau_RF(1), Tau_RF(2), Tau_LB(0), Tau_LB(1), Tau_LB(2), Tau_RB(0), Tau_RB(1), Tau_RB(2);
         quadruped->setGeneralizedForce(F);
+        JF << 0, 0, 0, 0, 0, 0, jffTorques2(0), jffTorques2(1), jffTorques2(2), jffTorques2(3), jffTorques2(4), jffTorques2(5),jffTorques2(6), jffTorques2(7), jffTorques2(8), jffTorques2(9), jffTorques2(10), jffTorques2(11);
+        RSWARN(torqueFromInverseDynamics)
+        RSINFO(JF)
         /* #endregion */
 
         /* #region: PUSH ROBOT */
