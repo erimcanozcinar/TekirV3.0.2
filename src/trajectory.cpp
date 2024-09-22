@@ -731,10 +731,10 @@ void trajectory::comTrajectory2(double RealTime, double Ts, double Td, int Nphas
     
     /* #region: Yaw */
     double dyaw = yaw/(Ts+Td);
-    offsetPf_LF << + 0.3870 + 0*Pfx_offset_fr, + Pfy_offset + LatOut*left_lat_off, Pfz_offset;
-    offsetPf_RF << + 0.3824 + 0*Pfx_offset_fr, - Pfy_offset - LatOut*right_lat_off, Pfz_offset;
-    offsetPf_LB << - 0.3887 + 0*Pfx_offset_bc, + Pfy_offset + LatOut*right_lat_off, Pfz_offset;
-    offsetPf_RB << - 0.3898 + 0*Pfx_offset_bc, - Pfy_offset - LatOut*left_lat_off, Pfz_offset;
+    offsetPf_LF << + Pfx_offset_fr, + Pfy_offset + LatOut, Pfz_offset;
+    offsetPf_RF << + Pfx_offset_fr, - Pfy_offset - LatOut, Pfz_offset;
+    offsetPf_LB << - Pfx_offset_bc, + Pfy_offset + LatOut, Pfz_offset;
+    offsetPf_RB << - Pfx_offset_bc, - Pfy_offset - LatOut, Pfz_offset;
     yawStr_LF = (RotateYaw(yaw*(kx+1))*offsetPf_LF - offsetPf_LF);
     yawStr_RF = (RotateYaw(yaw*(kx+1))*offsetPf_RF - offsetPf_RF);
     yawStr_LB = (RotateYaw(yaw*(kx+1))*offsetPf_LB - offsetPf_LB);

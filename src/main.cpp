@@ -54,6 +54,8 @@ int main(int argc, char** argv) {
     Tau_LF.setZero(); Tau_RF.setZero(); Tau_LB.setZero(); Tau_RB.setZero();
     
     prevdQcm.setZero(); prevQcm.setZero(); prevQcm_filtered.setZero();
+
+    Fvmc << 0, 0, MASS*GRAVITY, 0, 0, 0;
     /* #endregion */
 
     /* #region: Init classes*/
@@ -230,7 +232,7 @@ int main(int argc, char** argv) {
         Fvmc(2) = (50*(traj.Zc-genCoordinates(2)) + sqrt(50)*(0 - genVelocity(2)) + MASS*GRAVITY);
         Fvmc(3) = Mvmc(0);
         Fvmc(4) = Mvmc(1);
-        Fvmc(5) = 0*Mvmc(2);
+        Fvmc(5) = Mvmc(2);
         // RSINFO(comcuk);
         
         Fmatrix = VMC(Rf_LF-Rcom, Rf_RF-Rcom, Rf_LB-Rcom, Rf_RB-Rcom, Fcon_LF, Fcon_RF, Fcon_LB, Fcon_RB, Fvmc, dt);
@@ -274,10 +276,10 @@ int main(int argc, char** argv) {
             Tau_RF(i) = Kp(i)*(Q_RF(i) - q_RF(i)) + Kd(i)*(dQ_RF(i) - dq_RF(i)) + jffTorques(i+3);
             Tau_LB(i) = Kp(i)*(Q_LB(i) - q_LB(i)) + Kd(i)*(dQ_LB(i) - dq_LB(i)) + jffTorques(i+6);
             Tau_RB(i) = Kp(i)*(Q_RB(i) - q_RB(i)) + Kd(i)*(dQ_RB(i) - dq_RB(i)) + jffTorques(i+9);
-            // Tau_LF(i) = Kp(i)*(Q_LF(i) - q_LF(i)) + Kd(i)*(dQ_LF(i) - dq_LF(i)) + jointTorques(i+6);
-            // Tau_RF(i) = Kp(i)*(Q_RF(i) - q_RF(i)) + Kd(i)*(dQ_RF(i) - dq_RF(i)) + jointTorques(i+9);
-            // Tau_LB(i) = Kp(i)*(Q_LB(i) - q_LB(i)) + Kd(i)*(dQ_LB(i) - dq_LB(i)) + jointTorques(i+12);
-            // Tau_RB(i) = Kp(i)*(Q_RB(i) - q_RB(i)) + Kd(i)*(dQ_RB(i) - dq_RB(i)) + jointTorques(i+15);
+            // Tau_LF(i) = Kp(i)*(Q_LF(i) - q_LF(i)) + Kd(i)*(dQ_LF(i) - dq_LF(i)) + torqueFromInverseDynamics(i+6);
+            // Tau_RF(i) = Kp(i)*(Q_RF(i) - q_RF(i)) + Kd(i)*(dQ_RF(i) - dq_RF(i)) + torqueFromInverseDynamics(i+9);
+            // Tau_LB(i) = Kp(i)*(Q_LB(i) - q_LB(i)) + Kd(i)*(dQ_LB(i) - dq_LB(i)) + torqueFromInverseDynamics(i+12);
+            // Tau_RB(i) = Kp(i)*(Q_RB(i) - q_RB(i)) + Kd(i)*(dQ_RB(i) - dq_RB(i)) + torqueFromInverseDynamics(i+15);
         }
         /* #endregion */
 
@@ -285,8 +287,8 @@ int main(int argc, char** argv) {
         F << 0, 0, 0, 0, 0, 0, Tau_LF(0), Tau_LF(1), Tau_LF(2), Tau_RF(0), Tau_RF(1), Tau_RF(2), Tau_LB(0), Tau_LB(1), Tau_LB(2), Tau_RB(0), Tau_RB(1), Tau_RB(2);
         quadruped->setGeneralizedForce(F);
         JF << 0, 0, 0, 0, 0, 0, jffTorques2(0), jffTorques2(1), jffTorques2(2), jffTorques2(3), jffTorques2(4), jffTorques2(5),jffTorques2(6), jffTorques2(7), jffTorques2(8), jffTorques2(9), jffTorques2(10), jffTorques2(11);
-        RSWARN(torqueFromInverseDynamics)
-        RSINFO(JF)
+        // RSWARN(torqueFromInverseDynamics-JF)
+        // RSINFO(JF)
         /* #endregion */
 
         /* #region: PUSH ROBOT */

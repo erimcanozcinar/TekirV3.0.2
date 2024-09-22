@@ -376,8 +376,8 @@
     <child link="HIP_FE_Motor_lf"/>
     <axis xyz="1 0 0"/>
     <origin xyz="0.3102 0.105 0.002" rpy="0 0 0"/>
-	<limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
-	<dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
+    <limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
+    <dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
   </joint>
 
   <joint name="Joint_HIP_AA_rf" type="revolute">
@@ -385,8 +385,8 @@
     <child link="HIP_FE_Motor_rf"/>
     <axis xyz="1 0 0"/>
     <origin xyz="0.3102 -0.105 0.002" rpy="0 0 0"/>
-	<limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
-	<dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
+    <limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
+    <dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
   </joint>
   
   <joint name="Joint_HIP_AA_lb" type="revolute">
@@ -394,8 +394,8 @@
     <child link="HIP_FE_Motor_lb"/>
     <axis xyz="-1 0 0"/>
     <origin xyz="-0.3102 0.105 0.002" rpy="0 0 0"/>
-	<limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
-	<dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
+    <limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
+    <dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
   </joint>
   
   <joint name="Joint_HIP_AA_rb" type="revolute">
@@ -403,8 +403,8 @@
     <child link="HIP_FE_Motor_rb"/>
     <axis xyz="-1 0 0"/>
     <origin xyz="-0.3102 -0.105 0.002" rpy="0 0 0"/>
-	<limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
-	<dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
+    <limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
+    <dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
   </joint>
 
   <joint name="Joint_HIP_FE_lf" type="revolute">
@@ -412,8 +412,8 @@
     <child link="thigh_lf"/>
     <axis xyz="0 1 0"/>
     <origin xyz="0.079 0.0262 0" rpy="0 0 0"/>
-	<limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
-	<dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
+    <limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
+    <dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
   </joint>
 
   <joint name="Joint_HIP_FE_rf" type="revolute">
@@ -421,8 +421,8 @@
     <child link="thigh_rf"/>
     <axis xyz="0 -1 0"/>
     <origin xyz="0.079 -0.0262 0" rpy="0 0 0"/>
-	<limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
-	<dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
+    <limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
+    <dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
   </joint>
   
   <joint name="Joint_HIP_FE_lb" type="revolute">
@@ -430,8 +430,8 @@
     <child link="thigh_lb"/>
     <axis xyz="0 1 0"/>
     <origin xyz="-0.079 0.0262 0" rpy="0 0 0"/>
-	<limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
-	<dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
+    <limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
+    <dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
   </joint>
   
   <joint name="Joint_HIP_FE_rb" type="revolute">
@@ -439,8 +439,8 @@
     <child link="thigh_rb"/>
     <axis xyz="0 -1 0"/>
     <origin xyz="-0.079 -0.0262 0" rpy="0 0 0"/>
-	<limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
-	<dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
+    <limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
+    <dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
   </joint>
 
   <joint name="Joint_KNEE_FE_lf" type="revolute">
@@ -448,8 +448,8 @@
     <child link="shank_lf"/>
     <axis xyz="0 1 0"/>
     <origin xyz="0 0.1102 -0.27" rpy="0 0 0"/>
-	<limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
-	<dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
+    <limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
+    <dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
   </joint>
 
   <joint name="Joint_KNEE_FE_rf" type="revolute">
@@ -457,8 +457,8 @@
     <child link="shank_rf"/>
     <axis xyz="0 -1 0"/>
     <origin xyz="0 -0.1102 -0.27" rpy="0 0 0"/>
-	<limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
-	<dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
+    <limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
+    <dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
   </joint>
   
   <joint name="Joint_KNEE_FE_lb" type="revolute">
@@ -466,8 +466,8 @@
     <child link="shank_lb"/>
     <axis xyz="0 1 0"/>
     <origin xyz="0 0.1102 -0.27" rpy="0 0 0"/>
-	<limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
-	<dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
+    <limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
+    <dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
   </joint>
   
   <joint name="Joint_KNEE_FE_rb" type="revolute">
@@ -475,8 +475,8 @@
     <child link="shank_rb"/>
     <axis xyz="0 -1 0"/>
     <origin xyz="0 -0.1102 -0.27" rpy="0 0 0"/>
-	<limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
-	<dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
+    <limit effort="50" lower="0" upper="0" velocity="8.29031393750349"/>
+    <dynamics damping="0.0" friction="0.0" rotor_inertia="0.016506"/>
   </joint>
 
   <joint name="footFrame_lf" type="fixed"> 
