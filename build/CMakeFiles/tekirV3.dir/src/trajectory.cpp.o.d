@@ -466,12 +466,184 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: \
  /usr/local/include/allegro5/platform/alunix.h \
  /usr/local/include/allegro5/allegro_native_dialog.h \
  /home/erim/RaiSim_Simulations/TekirV3.0.2/include/functions.hpp \
- /usr/include/eigen3/unsupported/Eigen/MatrixFunctions \
- /usr/include/c++/11/cfloat \
- /usr/lib/gcc/x86_64-linux-gnu/11/include/float.h \
- /usr/include/c++/11/list /usr/include/c++/11/bits/stl_list.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/World.hpp \
+ /usr/include/c++/11/memory \
+ /usr/include/c++/11/bits/stl_raw_storage_iter.h \
+ /usr/include/c++/11/bits/align.h /usr/include/c++/11/bit \
+ /usr/include/c++/11/bits/unique_ptr.h \
+ /usr/include/c++/11/bits/shared_ptr.h \
+ /usr/include/c++/11/bits/shared_ptr_base.h \
  /usr/include/c++/11/bits/allocated_ptr.h \
- /usr/include/c++/11/bits/list.tcc \
+ /usr/include/c++/11/ext/concurrence.h \
+ /usr/include/c++/11/bits/shared_ptr_atomic.h \
+ /usr/include/c++/11/backward/auto_ptr.h \
+ /usr/include/c++/11/pstl/glue_memory_defs.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/helper.hpp \
+ /usr/include/c++/11/chrono /usr/include/c++/11/ratio \
+ /usr/include/c++/11/ctime /usr/include/c++/11/bits/parse_numbers.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/raisim_message.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/raisim_message_logger.hpp \
+ /usr/include/c++/11/iostream /usr/include/c++/11/iomanip \
+ /usr/include/c++/11/locale \
+ /usr/include/c++/11/bits/locale_facets_nonio.h \
+ /usr/include/x86_64-linux-gnu/c++/11/bits/time_members.h \
+ /usr/include/x86_64-linux-gnu/c++/11/bits/messages_members.h \
+ /usr/include/libintl.h /usr/include/c++/11/bits/codecvt.h \
+ /usr/include/c++/11/bits/locale_facets_nonio.tcc \
+ /usr/include/c++/11/bits/locale_conv.h \
+ /usr/include/c++/11/bits/quoted_string.h /usr/include/c++/11/math.h \
+ /usr/include/c++/11/fstream \
+ /usr/include/x86_64-linux-gnu/c++/11/bits/basic_file.h \
+ /usr/include/x86_64-linux-gnu/c++/11/bits/c++io.h \
+ /usr/include/c++/11/bits/fstream.tcc \
+ /usr/include/x86_64-linux-gnu/sys/stat.h \
+ /usr/include/x86_64-linux-gnu/bits/statx.h /usr/include/linux/stat.h \
+ /usr/include/linux/types.h /usr/include/x86_64-linux-gnu/asm/types.h \
+ /usr/include/asm-generic/types.h /usr/include/asm-generic/int-ll64.h \
+ /usr/include/x86_64-linux-gnu/asm/bitsperlong.h \
+ /usr/include/asm-generic/bitsperlong.h /usr/include/linux/posix_types.h \
+ /usr/include/linux/stddef.h \
+ /usr/include/x86_64-linux-gnu/asm/posix_types.h \
+ /usr/include/x86_64-linux-gnu/asm/posix_types_64.h \
+ /usr/include/asm-generic/posix_types.h \
+ /usr/include/x86_64-linux-gnu/bits/statx-generic.h \
+ /usr/include/x86_64-linux-gnu/bits/types/struct_statx_timestamp.h \
+ /usr/include/x86_64-linux-gnu/bits/types/struct_statx.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/Path.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/raisim_message.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/Object.hpp \
+ /usr/include/c++/11/mutex /usr/include/c++/11/bits/std_mutex.h \
+ /usr/include/c++/11/bits/unique_lock.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/contact/BisectionContactSolver.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/Materials.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/RaiSimTinyXmlWrapper.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/tinyxml_rai/tinyxml_rai.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/tinyxml_rai/tinystr.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/math.hpp \
+ /usr/include/eigen3/Eigen/Core /usr/include/c++/11/numeric \
+ /usr/include/c++/11/bits/stl_numeric.h \
+ /usr/include/c++/11/pstl/glue_numeric_defs.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/math/Core.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/math/Expression.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/math/Matrix.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/math/Blocks.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/math/Product.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/math/Operation.hpp \
+ /usr/lib/gcc/x86_64-linux-gnu/11/include/float.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/configure.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/RaiSimTinyXmlWriter.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/contact/Contact.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/objects.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/common.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/odeconfig.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/precision.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/error.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/mass.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/contact.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/memory.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/array.h \
+ /usr/include/c++/11/set /usr/include/c++/11/bits/stl_tree.h \
+ /usr/include/c++/11/bits/stl_set.h \
+ /usr/include/c++/11/bits/stl_multiset.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/ode.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/compatibility.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/odemath.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/odemath_legacy.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/matrix.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/rotation.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/misc.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/collision_space.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/collision.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/collision_trimesh.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/version.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/ode/odecpp_collision.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/singleBodies/SingleBodyObject.hpp \
+ /usr/include/eigen3/Eigen/Geometry \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/singleBodies/Sphere.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/singleBodies/SingleBodyObject.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/singleBodies/Cylinder.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/singleBodies/Box.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/singleBodies/Capsule.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/singleBodies/Cone.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/singleBodies/Compound.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/constraints/StiffLengthConstraint.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/constraints/LengthConstraint.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/constraints/Constraints.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/constraints/CustomLengthConstraint.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/constraints/CompliantLengthConstraint.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/terrain/Ground.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/terrain/HeightMap.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/Terrain.hpp \
+ /usr/include/c++/11/random /usr/include/c++/11/bits/random.h \
+ /usr/include/x86_64-linux-gnu/c++/11/bits/opt_random.h \
+ /usr/include/c++/11/bits/random.tcc \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/ArticulatedSystem/ArticulatedSystem.hpp \
+ /usr/include/c++/11/map /usr/include/c++/11/bits/stl_map.h \
+ /usr/include/c++/11/bits/stl_multimap.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/ArticulatedSystem/JointAndBodies.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/singleBodies/Mesh.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/sensors/Sensors.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/server/SerializationHelper.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/constraints/PinConstraint.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/sensors/RGBSensor.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/sensors/DepthSensor.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/sensors/InertialMeasurementUnit.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/rayCollision.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/ArticulatedSystem/loaders.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/ArticulatedSystem/ArticulatedSystem.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/configure.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/RaisimServer.hpp \
+ /usr/include/arpa/inet.h /usr/include/netinet/in.h \
+ /usr/include/x86_64-linux-gnu/sys/socket.h \
+ /usr/include/x86_64-linux-gnu/bits/socket.h \
+ /usr/include/x86_64-linux-gnu/bits/socket_type.h \
+ /usr/include/x86_64-linux-gnu/bits/sockaddr.h \
+ /usr/include/x86_64-linux-gnu/asm/socket.h \
+ /usr/include/asm-generic/socket.h \
+ /usr/include/x86_64-linux-gnu/asm/sockios.h \
+ /usr/include/asm-generic/sockios.h \
+ /usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h \
+ /usr/include/x86_64-linux-gnu/bits/socket2.h \
+ /usr/include/x86_64-linux-gnu/bits/in.h \
+ /usr/include/x86_64-linux-gnu/sys/wait.h /usr/include/signal.h \
+ /usr/include/x86_64-linux-gnu/bits/signum-generic.h \
+ /usr/include/x86_64-linux-gnu/bits/signum-arch.h \
+ /usr/include/x86_64-linux-gnu/bits/types/sig_atomic_t.h \
+ /usr/include/x86_64-linux-gnu/bits/types/siginfo_t.h \
+ /usr/include/x86_64-linux-gnu/bits/types/__sigval_t.h \
+ /usr/include/x86_64-linux-gnu/bits/siginfo-arch.h \
+ /usr/include/x86_64-linux-gnu/bits/siginfo-consts.h \
+ /usr/include/x86_64-linux-gnu/bits/siginfo-consts-arch.h \
+ /usr/include/x86_64-linux-gnu/bits/types/sigval_t.h \
+ /usr/include/x86_64-linux-gnu/bits/types/sigevent_t.h \
+ /usr/include/x86_64-linux-gnu/bits/sigevent-consts.h \
+ /usr/include/x86_64-linux-gnu/bits/sigaction.h \
+ /usr/include/x86_64-linux-gnu/bits/sigcontext.h \
+ /usr/include/x86_64-linux-gnu/bits/types/stack_t.h \
+ /usr/include/x86_64-linux-gnu/sys/ucontext.h \
+ /usr/include/x86_64-linux-gnu/bits/sigstack.h \
+ /usr/include/x86_64-linux-gnu/bits/sigstksz.h \
+ /usr/include/x86_64-linux-gnu/bits/ss_flags.h \
+ /usr/include/x86_64-linux-gnu/bits/types/struct_sigstack.h \
+ /usr/include/x86_64-linux-gnu/bits/sigthread.h \
+ /usr/include/x86_64-linux-gnu/bits/signal_ext.h /usr/include/poll.h \
+ /usr/include/x86_64-linux-gnu/sys/poll.h \
+ /usr/include/x86_64-linux-gnu/bits/poll.h \
+ /usr/include/x86_64-linux-gnu/bits/poll2.h /usr/include/c++/11/iterator \
+ /usr/include/c++/11/bits/stream_iterator.h /usr/include/c++/11/thread \
+ /usr/include/c++/11/bits/std_thread.h \
+ /usr/include/c++/11/bits/this_thread_sleep.h /usr/include/c++/11/future \
+ /usr/include/c++/11/condition_variable \
+ /usr/include/c++/11/bits/atomic_futex.h /usr/include/c++/11/queue \
+ /usr/include/c++/11/deque /usr/include/c++/11/bits/stl_deque.h \
+ /usr/include/c++/11/bits/deque.tcc /usr/include/c++/11/bits/stl_queue.h \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/server/Visuals.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/server/Charts.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/server/SerializationHelper.hpp \
+ /home/erim/raisim_ws_v1.1.7/install/include/raisim/object/ArticulatedSystem/JointAndBodies.hpp \
+ /usr/include/eigen3/unsupported/Eigen/MatrixFunctions \
+ /usr/include/c++/11/cfloat /usr/include/c++/11/list \
+ /usr/include/c++/11/bits/stl_list.h /usr/include/c++/11/bits/list.tcc \
  /usr/include/eigen3/unsupported/Eigen/../../Eigen/Core \
  /usr/include/eigen3/unsupported/Eigen/../../Eigen/LU \
  /usr/include/eigen3/unsupported/Eigen/../../Eigen/Eigenvalues \
@@ -483,5 +655,4 @@ CMakeFiles/tekirV3.dir/src/trajectory.cpp.o: \
  /usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixLogarithm.h \
  /usr/include/eigen3/unsupported/Eigen/src/MatrixFunctions/MatrixPower.h \
  /usr/include/eigen3/unsupported/Eigen/../../Eigen/src/Core/util/ReenableStupidWarnings.h \
- /usr/include/c++/11/iostream \
  /home/erim/RaiSim_Simulations/TekirV3.0.2/include/parameters.hpp

@@ -1189,7 +1189,7 @@ Eigen::Vector3d funcNewtonEuler(Eigen::Vector3d rootAbsAcc, Eigen::Matrix3d root
     return JTorques;
 }
 
-Eigen::VectorXd funcNewtonEuler2(Eigen::Vector3d rootAbsAcc, Eigen::Matrix3d rootOrient, Eigen::Vector3d rootAngVel, Eigen::Vector3d rootAngAcc, Eigen::Vector3d jPos, Eigen::Vector3d jVel, Eigen::Vector3d jAcc, Eigen::Vector3d grForce, Eigen::Vector3d Rcon, int legIndex)
+Eigen::VectorXd funcNewtonEuler2(Eigen::Vector3d rootAbsPos, Eigen::Vector3d rootAbsAcc, Eigen::Matrix3d rootOrient, Eigen::Vector3d rootAngVel, Eigen::Vector3d rootAngAcc, Eigen::Vector3d jPos, Eigen::Vector3d jVel, Eigen::Vector3d jAcc, Eigen::Vector3d grForce, Eigen::Vector3d Rcon, int legIndex)
 {
     Eigen::VectorXd JTorques(9);
     double q0, q1, q2, q3, q4, q5, q6, qf;
@@ -1213,7 +1213,7 @@ Eigen::VectorXd funcNewtonEuler2(Eigen::Vector3d rootAbsAcc, Eigen::Matrix3d roo
     Eigen::Vector3d n1, n2, n3, n4, n5, n6;
 
     Eigen::Vector3d gravityVec;
-    gravityVec << 0, 0, GRAVITY;
+    gravityVec << 0, 0, 0*GRAVITY;
 
     int m, n;
     switch (legIndex) {
@@ -1267,7 +1267,7 @@ Eigen::VectorXd funcNewtonEuler2(Eigen::Vector3d rootAbsAcc, Eigen::Matrix3d roo
     dq6 = 0.0; // Tip of foot
 
     Jvel0 << 0, 0, 0;
-    Jvel1 = rootAngVel;
+    Jvel1 = R10.transpose()*rootAngVel;
     Jvel2 << dq2, 0, 0;
     Jvel3 << 0, dq3, 0;
     Jvel4 << 0, dq4, 0;
@@ -1285,7 +1285,7 @@ Eigen::VectorXd funcNewtonEuler2(Eigen::Vector3d rootAbsAcc, Eigen::Matrix3d roo
     ddq6 = 0.0; // Tip of foot
 
     Jacc0 << 0, 0, 0;
-    Jacc1 = rootAngAcc;
+    Jacc1 = R10.transpose()*rootAngAcc;
     Jacc2 << ddq2, 0, 0;
     Jacc3 << 0, ddq3, 0;
     Jacc4 << 0, ddq4, 0;
@@ -1294,7 +1294,7 @@ Eigen::VectorXd funcNewtonEuler2(Eigen::Vector3d rootAbsAcc, Eigen::Matrix3d roo
     /* #endregion */
 
     /* #region: Joint position wrt prev. joint */
-    P01 << 0.0000, 0.0000, 0.0000;
+    P01 = rootAbsPos;
     P12 << m*0.3102, n*0.1050, 0.0020;
     P23 << m*0.0790, n*0.0262, 0.0000;
     P34 << m*0.0000, n*0.1102, -0.2700;
@@ -1378,6 +1378,7 @@ Eigen::VectorXd funcNewtonEuler2(Eigen::Vector3d rootAbsAcc, Eigen::Matrix3d roo
     dvc5 = dw5.cross(Pc5) + w5.cross(w5.cross(Pc5)) + dv5;
     F5 = m5*dvc5;
     N5 = Inertia5*dw5 + w5.cross(Inertia5*w5);
+    RSWARN(F5)
 
     /*********** Inward iteration **********/
     R60 = R10*R21*R32*R43*R54*R65; // Rotation from Tip of foot frame to World frame
@@ -1399,7 +1400,7 @@ Eigen::VectorXd funcNewtonEuler2(Eigen::Vector3d rootAbsAcc, Eigen::Matrix3d roo
     return JTorques;
 }
 
-Eigen::Matrix<double, 12, 1> funNewtonEuler4Leg(Eigen::Vector3d rootAbsAcc, Eigen::Matrix3d rootOrient, Eigen::Vector3d rootAngVel, Eigen::Vector3d rootAngAcc, Eigen::VectorXd jPos, Eigen::VectorXd jVel, Eigen::VectorXd jAcc, Eigen::Vector3d grForce_LF, Eigen::Vector3d grForce_RF, Eigen::Vector3d grForce_LB, Eigen::Vector3d grForce_RB)
+Eigen::Matrix<double, 12, 1> funNewtonEuler4Leg(Eigen::Vector3d rootAbsPos, Eigen::Vector3d rootAbsAcc, Eigen::Matrix3d rootOrient, Eigen::Vector3d rootAngVel, Eigen::Vector3d rootAngAcc, Eigen::VectorXd jPos, Eigen::VectorXd jVel, Eigen::VectorXd jAcc, Eigen::Vector3d grForce_LF, Eigen::Vector3d grForce_RF, Eigen::Vector3d grForce_LB, Eigen::Vector3d grForce_RB)
 {
     Eigen::Vector3d jPos_LF, jPos_RF, jPos_LB, jPos_RB;
     Eigen::Vector3d jVel_LF, jVel_RF, jVel_LB, jVel_RB;
@@ -1432,18 +1433,15 @@ Eigen::Matrix<double, 12, 1> funNewtonEuler4Leg(Eigen::Vector3d rootAbsAcc, Eige
     Rfoot_LB = rootOrient * RotateRoll(jPos_LB(0)) * RotatePitch(jPos_LB(1)) * RotatePitch(jPos_LB(2)) * RotatePitch(30 * PI / 180);
     Rfoot_RB = rootOrient * RotateRoll(jPos_RB(0)) * RotatePitch(jPos_RB(1)) * RotatePitch(jPos_RB(2)) * RotatePitch(-30 * PI / 180);
 
-    Tau_LF = funcNewtonEuler2(rootAbsAcc, rootOrient, rootAngVel, rootAngAcc, jPos_LF, jVel_LF, jAcc_LF, grForce_LF, Rcon_LF, 1);
-    Tau_RF = funcNewtonEuler2(rootAbsAcc, rootOrient, rootAngVel, rootAngAcc, jPos_RF, jVel_RF, jAcc_RF, grForce_RF, Rcon_RF, 2);
-    Tau_LB = funcNewtonEuler2(rootAbsAcc, rootOrient, rootAngVel, rootAngAcc, jPos_LB, jVel_LB, jAcc_LB, grForce_LB, Rcon_LB, 3);
-    Tau_RB = funcNewtonEuler2(rootAbsAcc, rootOrient, rootAngVel, rootAngAcc, jPos_RB, jVel_RB, jAcc_RB, grForce_RB, Rcon_RB, 4);
+    Tau_LF = funcNewtonEuler2(rootAbsPos, rootAbsAcc, rootOrient, rootAngVel, rootAngAcc, jPos_LF, jVel_LF, jAcc_LF, grForce_LF, Rcon_LF, 1);
+    Tau_RF = funcNewtonEuler2(rootAbsPos, rootAbsAcc, rootOrient, rootAngVel, rootAngAcc, jPos_RF, jVel_RF, jAcc_RF, grForce_RF, Rcon_RF, 2);
+    Tau_LB = funcNewtonEuler2(rootAbsPos, rootAbsAcc, rootOrient, rootAngVel, rootAngAcc, jPos_LB, jVel_LB, jAcc_LB, grForce_LB, Rcon_LB, 3);
+    Tau_RB = funcNewtonEuler2(rootAbsPos, rootAbsAcc, rootOrient, rootAngVel, rootAngAcc, jPos_RB, jVel_RB, jAcc_RB, grForce_RB, Rcon_RB, 4);
 
     Ft_LF = Tau_LF.head(6);
     Ft_RF = Tau_RF.head(6);
     Ft_LB = Tau_LB.head(6);
     Ft_RB = Tau_RB.head(6);
-    Ft << Ft_LF, Ft_RF, Ft_LB, Ft_RB;
-    std::cout << Ft << std::endl; 
-    std::cout << "-----------" << std::endl; 
 
     jTorques << Tau_LF.tail(3), Tau_RF.tail(3), Tau_LB.tail(3), Tau_RB.tail(3);
     // jTorques << Tau_LF(0), Tau_LF(1), Tau_LF(2), Tau_RF(0), Tau_RF(1), Tau_RF(2), Tau_LB(0), Tau_LB(1), Tau_LB(2), Tau_RB(0), Tau_RB(1), Tau_RB(2);
