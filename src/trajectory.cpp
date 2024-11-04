@@ -1034,6 +1034,12 @@ void trajectory::trajGeneration(double RealTime, bool walkEnable, double command
 
     if(walk_enabled){
         can_switch = (AreDoubleSame(Footz_RF(0),Fc)) || (AreDoubleSame(Footz_LF(0),Fc));
+        if(Fc_coeff == 1){
+            can_switch = (AreDoubleSame(Footz_RF(0),Fc)) || (AreDoubleSame(Footz_LF(0),Fc));
+        } else {
+            can_switch = (AreDoubleSame(Footz_RF(0),0)) && (AreDoubleSame(Footz_LF(0),0));
+        }
+            
     } else {
         can_switch = false;
     }
@@ -1042,13 +1048,20 @@ void trajectory::trajGeneration(double RealTime, bool walkEnable, double command
     if(abs(Vx_mean) > 0 || abs(Vy_mean) > 0){
         can_stop = false;
     } else {
-        can_stop = (AreDoubleSame(Footz_RF(0),0)) && (AreDoubleSame(Footz_LF(0),0));
+        // can_stop = (AreDoubleSame(Footz_RF(0),0)) && (AreDoubleSame(Footz_LF(0),0));
+        if ((AreDoubleSame(Footz_RF(0),0)) && (AreDoubleSame(Footz_LF(0),0))){
+            can_stop = true;
+            Fc_coeff = 0;
+        }
     }
 
     if(can_switch && walk_enabled){
         Vx_mean = command_Vx; 
         Vy_mean = command_Vy;
         Yaw_mean = command_Yaw;
+        if(abs(Vx_mean) > 0 || abs(Vy_mean) > 0){
+            Fc_coeff = 1;
+        }
     }
 
 
@@ -1087,14 +1100,14 @@ void trajectory::trajGeneration(double RealTime, bool walkEnable, double command
     
     comTrajectory2(RealTime-w_start_time, Ts, Td, Nphase, px, py, Vx_mean, Vy_mean, Yaw_mean, height, Fc, dt);
     Zc = height;
-    Xc = Cx+Comx; Yc = Cy+Comy; 
+    Xc = Cx+Comx - 0*mapVal(Zc, 0.53319176863337994221048177223565, 0.101, 0.3892*0.65, 0); Yc = Cy+Comy; 
     dXc = dCx; dYc = dCy; 
     ddXc = ddCx; ddYc = ddCy;
     if(walk_enabled) { Yawc = Cyaw/2; }
     else { Yawc = command_Yaw; }  
 
-    Pfoot_LF << Footx_LF(0) + offsetPf_LF(0) + Comx, Footy_LF(0) + offsetPf_LF(1) + Comy, Footz_LF(0) + offsetPf_LF(2);  
-    Pfoot_RF << Footx_RF(0) + offsetPf_RF(0) + Comx, Footy_RF(0) + offsetPf_RF(1) + Comy, Footz_RF(0) + offsetPf_RF(2);  
-    Pfoot_LB << Footx_LB(0) + offsetPf_LB(0) + Comx, Footy_LB(0) + offsetPf_LB(1) + Comy, Footz_LB(0) + offsetPf_LB(2);  
-    Pfoot_RB << Footx_RB(0) + offsetPf_RB(0) + Comx, Footy_RB(0) + offsetPf_RB(1) + Comy, Footz_RB(0) + offsetPf_RB(2);  
+    Pfoot_LF << Footx_LF(0) + offsetPf_LF(0) + Comx, Footy_LF(0) + offsetPf_LF(1) + Comy + LatOut, Fc_coeff*Footz_LF(0) + offsetPf_LF(2);  
+    Pfoot_RF << Footx_RF(0) + offsetPf_RF(0) + Comx, Footy_RF(0) + offsetPf_RF(1) + Comy + LatOut, Fc_coeff*Footz_RF(0) + offsetPf_RF(2);  
+    Pfoot_LB << Footx_LB(0) + offsetPf_LB(0) + Comx, Footy_LB(0) + offsetPf_LB(1) + Comy + LatOut, Fc_coeff*Footz_LB(0) + offsetPf_LB(2);  
+    Pfoot_RB << Footx_RB(0) + offsetPf_RB(0) + Comx, Footy_RB(0) + offsetPf_RB(1) + Comy + LatOut, Fc_coeff*Footz_RB(0) + offsetPf_RB(2);  
 }
